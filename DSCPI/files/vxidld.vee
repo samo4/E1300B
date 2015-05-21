@@ -1,0 +1,2478 @@
+#! C:\VEE.3/vee -r
+(saveFormat "1.2")
+(date "Thu 12/Dec/1996")
+(SaveCF "no")
+(filterNAN 0)
+(component 0 "ROOTCONTEXT"
+ (name "Untitled")
+ (interface
+ )
+ (implementation
+  (UserFunctions
+   (nextID 7)
+   (context 0
+    (name "ReadFile")
+    (interface
+     (sequence in)
+     (sequence out)
+     (input 1
+      (name "FileName")
+      (optional yes)
+     )
+     (output 1
+      (type data)
+      (name "Header")
+      (lock constraints)
+      (optional yes)
+     )
+     (output 2
+      (type data)
+      (name "Dvr")
+      (lock constraints)
+      (optional yes)
+     )
+     (output 3
+      (type data)
+      (name "DRAM_Size")
+      (lock constraints)
+      (optional yes)
+     )
+    )
+    (implementation
+     (locked no)
+     (trigMode deg)
+     (nextID 3)
+     (component 0 "FROMFILE"
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (type control)
+        (name "File Name")
+        (requires
+         (datatype Text)
+         (shape "Scalar")
+        )
+        (lock name constraints)
+        (optional yes)
+       )
+       (output 1
+        (name "Header")
+        (lock constraints)
+        (optional yes)
+       )
+       (output 2
+        (name "Dvr")
+        (lock constraints)
+        (optional yes)
+       )
+      )
+      (implementation
+       (attr iopath file read "RS232.DU"
+        (readTerm "\n")
+        (fs " ")
+        (eol "\n")
+        (multiField fullSyntax)
+        (arrayFormat block)
+       )
+       (procedure
+         READ TEXT Header CHAR:15
+         READ BINBLOCK Dvr BYTE ARRAY:*
+         EXECUTE CLOSE
+       )
+      )
+      (views
+       (icon
+       )
+       (detail
+        (origin 327 172)
+        (extent 337 114)
+       )
+       (terminals on)
+       (active detail)
+      )
+     )
+     (component 1 "FORMULA"
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "A")
+        (optional yes)
+       )
+       (output 1
+        (name "Result")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component expr 1 "bitshift(A[4], 24)+bitshift(A[5], 16)+bitshift(A[6], 8)+A[7]")
+      )
+      (views
+       (icon
+       )
+       (detail
+        (origin 299 369)
+        (extent 402 41)
+       )
+       (terminals on)
+       (active detail)
+      )
+     )
+     (component 2 "FORMULA"
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "A")
+        (optional yes)
+       )
+       (output 1
+        (name "Result")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component expr 1 "4*intpart(A/4)+4*(fracpart(A/4)!=0)")
+      )
+      (views
+       (icon
+       )
+       (detail
+        (origin 373 489)
+        (extent 254 41)
+       )
+       (terminals on)
+       (active detail)
+      )
+     )
+     (configuration
+      (connect I1:1 D0:1)
+      (connect D0:2 D1:1)
+      (connect D1:1 D2:1)
+      (connect D0:1 O1:1)
+      (connect D0:2 O2:1)
+      (connect D2:1 O3:1)
+     )
+    )
+    (views
+     (detail
+      (origin 201 124)
+      (extent 613 441)
+      (configuration
+       (connect I1:1 D0:1
+        (Point 201 340)
+        (Point 210 340)
+        (Point 210 229)
+        (Point 254 229)
+       )
+       (connect D0:2 D1:1
+        (Point 726 259)
+        (Point 750 259)
+        (Point 750 309)
+        (Point 250 309)
+        (Point 250 389)
+        (Point 266 389)
+       )
+       (connect D1:1 D2:1
+        (Point 753 389)
+        (Point 770 389)
+        (Point 770 429)
+        (Point 320 429)
+        (Point 320 509)
+        (Point 340 509)
+       )
+       (connect D0:1 O1:1
+        (Point 726 199)
+        (Point 771 199)
+        (Point 771 200)
+        (Point 813 200)
+       )
+       (connect D0:2 O2:1
+        (Point 726 259)
+        (Point 770 259)
+        (Point 770 340)
+        (Point 813 340)
+       )
+       (connect D2:1 O3:1
+        (Point 679 509)
+        (Point 700 509)
+        (Point 700 480)
+        (Point 813 480)
+       )
+      )
+      (stackingOrder 0 1 2)
+     )
+     (terminals on)
+     (active detail)
+    )
+   )
+   (context 1
+    (name "GetDramSize")
+    (interface
+     (sequence in)
+     (sequence out)
+     (input 1
+      (name "Directory")
+      (optional yes)
+     )
+     (input 2
+      (name "Files")
+      (optional yes)
+     )
+     (output 1
+      (type data)
+      (name "Data")
+      (lock constraints)
+      (optional yes)
+     )
+    )
+    (implementation
+     (locked no)
+     (trigMode deg)
+     (nextID 6)
+     (component 0 "FORMULA"
+      (name "A+B")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "A")
+        (optional yes)
+       )
+       (input 2
+        (name "B")
+        (optional yes)
+       )
+       (output 1
+        (name "Result")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component expr 1 "A+B")
+      )
+      (views
+       (icon
+        (origin 367 280)
+        (extent 30 25)
+       )
+       (detail
+        (origin 384 199)
+        (extent 72 42)
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 1 "FORMULA"
+      (name "totSize(x)")
+      (subType "totSize")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "X")
+        (optional yes)
+       )
+       (output 1
+        (name "Result")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component expr 1 "totSize(x)")
+      )
+      (views
+       (icon
+        (origin 301 334)
+        (extent 63 16)
+       )
+       (detail
+        (origin 304 54)
+        (extent 92 32)
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 2 "FORCOUNT"
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "Count")
+        (tag "Count")
+        (requires
+         (datatype Int32)
+         (shape "Scalar")
+        )
+        (lock constraints)
+        (optional yes)
+        (buffer YES)
+       )
+       (output 1
+        (name "Count")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component count 1)
+      )
+      (views
+       (icon
+        (origin 397 334)
+        (extent 70 16)
+       )
+       (detail
+        (origin 307 114)
+        (extent 106 32)
+       )
+       (active icon)
+      )
+     )
+     (component 3 "FORMULA"
+      (name "A[B]")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "A")
+        (optional yes)
+       )
+       (input 2
+        (name "B")
+        (optional yes)
+       )
+       (output 1
+        (name "Result")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component expr 1 "A[B]")
+      )
+      (views
+       (icon
+        (origin 497 320)
+        (extent 30 25)
+       )
+       (detail
+        (origin 514 139)
+        (extent 72 42)
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 4 "CALL"
+      (name "Call ReadFile")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "FileName")
+        (optional yes)
+       )
+       (output 1
+        (name "Header")
+        (lock name constraints)
+        (optional yes)
+       )
+       (output 2
+        (name "Dvr")
+        (lock name constraints)
+        (optional yes)
+       )
+       (output 3
+        (name "DRAM_Size")
+        (lock name constraints)
+        (optional yes)
+       )
+      )
+      (implementation
+       (component callFunc "ReadFile")
+       (component parmMode "rev30")
+      )
+      (views
+       (icon
+        (origin 556 315)
+        (extent 93 34)
+       )
+       (detail
+        (origin 607 129)
+        (extent 196 62)
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 5 "ACCUMULATOR"
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "Data")
+        (tag "InData")
+        (requires
+         (shape "Scalar")
+        )
+        (lock name constraints)
+       )
+       (output 1
+        (name "Data")
+        (tag "accumData")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component clearAtPrerun 1)
+       (component clearAtActivate 1)
+      )
+      (views
+       (icon
+        (origin 670 334)
+        (extent 85 16)
+       )
+       (detail
+        (origin 740 134)
+        (extent 121 32)
+       )
+       (active icon)
+      )
+     )
+     (configuration
+      (connect I1:1 D0:1)
+      (connect I2:1 D0:2)
+      (connect I2:1 D1:1)
+      (connect D1:1 D2:1)
+      (connect D0:1 D3:1)
+      (connect D2:1 D3:2)
+      (connect D3:1 D4:1)
+      (connect D4:3 D5:1)
+      (connect D5:1 O1:1)
+     )
+    )
+    (views
+     (detail
+      (origin 228 195)
+      (extent 589 299)
+      (configuration
+       (connect I1:1 D0:1
+        (Point 228 270)
+        (Point 282 270)
+        (Point 282 282)
+        (Point 364 282)
+       )
+       (connect I2:1 D0:2
+        (Point 228 410)
+        (Point 282 410)
+        (Point 282 302)
+        (Point 364 302)
+       )
+       (connect I2:1 D1:1
+        (Point 228 410)
+        (Point 282 410)
+        (Point 282 342)
+        (Point 298 342)
+       )
+       (connect D1:1 D2:1
+        (Point 366 342)
+        (Point 394 342)
+       )
+       (connect D0:1 D3:1
+        (Point 399 292)
+        (Point 472 292)
+        (Point 472 322)
+        (Point 494 322)
+       )
+       (connect D2:1 D3:2
+        (Point 469 342)
+        (Point 494 342)
+       )
+       (connect D3:1 D4:1
+        (Point 529 332)
+        (Point 553 332)
+       )
+       (connect D4:3 D5:1
+        (Point 651 342)
+        (Point 667 342)
+       )
+       (connect D5:1 O1:1
+        (Point 757 342)
+        (Point 785 342)
+        (Point 785 340)
+        (Point 816 340)
+       )
+      )
+      (stackingOrder 0 1 2 3 4 5)
+     )
+     (terminals on)
+     (active detail)
+    )
+   )
+   (context 2
+    (name "SendDrivers")
+    (interface
+     (sequence in)
+     (sequence out)
+     (input 1
+      (name "Directory")
+      (optional yes)
+     )
+     (input 2
+      (name "Files")
+      (optional yes)
+     )
+    )
+    (implementation
+     (locked no)
+     (trigMode deg)
+     (nextID 14)
+     (popupTitle off)
+     (popupBorder off)
+     (component 0 "FORMULA"
+      (name "A+B")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "A")
+        (optional yes)
+       )
+       (input 2
+        (name "B")
+        (optional yes)
+       )
+       (output 1
+        (name "Result")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component expr 1 "A+B")
+      )
+      (views
+       (icon
+        (origin 283 228)
+        (extent 35 25)
+       )
+       (detail
+        (origin 384 199)
+        (extent 72 42)
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 1 "FORMULA"
+      (name "totSize(x)")
+      (subType "totSize")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "X")
+        (optional yes)
+       )
+       (output 1
+        (name "Result")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component expr 1 "totSize(x)")
+      )
+      (views
+       (icon
+        (origin 157 272)
+        (extent 87 17)
+       )
+       (detail
+        (origin 304 54)
+        (extent 92 32)
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 2 "FORCOUNT"
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "Count")
+        (tag "Count")
+        (requires
+         (datatype Int32)
+         (shape "Scalar")
+        )
+        (lock constraints)
+        (optional yes)
+        (buffer YES)
+       )
+       (output 1
+        (name "Count")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component count 1)
+      )
+      (views
+       (icon
+        (origin 257 272)
+        (extent 87 16)
+       )
+       (detail
+        (origin 307 114)
+        (extent 106 32)
+       )
+       (active icon)
+      )
+     )
+     (component 3 "FORMULA"
+      (name "A[B]")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "A")
+        (optional yes)
+       )
+       (input 2
+        (name "B")
+        (optional yes)
+       )
+       (output 1
+        (name "Result")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component expr 1 "A[B]")
+      )
+      (views
+       (icon
+        (origin 371 258)
+        (extent 38 25)
+       )
+       (detail
+        (origin 514 139)
+        (extent 72 42)
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 4 "CALL"
+      (name "Call ReadFile")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "FileName")
+        (optional yes)
+       )
+       (output 1
+        (name "Header")
+        (lock name constraints)
+        (optional yes)
+       )
+       (output 2
+        (name "Dvr")
+        (lock name constraints)
+        (optional yes)
+       )
+       (output 3
+        (name "DRAM_Size")
+        (lock name constraints)
+        (optional yes)
+       )
+      )
+      (implementation
+       (component callFunc "ReadFile")
+       (component parmMode "rev30")
+      )
+      (views
+       (icon
+        (origin 429 253)
+        (extent 103 34)
+       )
+       (detail
+        (origin 397 529)
+        (extent 196 62)
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 6 "IODEVICE"
+      (name "E1406 ( @ (NOT LIVE))")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "Header")
+        (optional yes)
+       )
+       (input 2
+        (name "Dvr")
+        (optional yes)
+       )
+       (input 3
+        (type control)
+        (name "Timeout")
+        (requires
+         (datatype Real)
+         (shape "Scalar")
+        )
+        (lock name constraints)
+        (optional yes)
+       )
+      )
+      (implementation
+       (comp iopath "E1406")
+       (procedure
+         WRITE TEXT Header
+         WRITE BINBLOCK Dvr BYTE EOL
+       )
+      )
+      (views
+       (icon
+        (origin 610 193)
+        (extent 140 34)
+       )
+       (detail
+        (origin 620 242)
+        (extent 251 57)
+       )
+       (terminals on)
+       (active detail)
+      )
+     )
+     (component 7 "CONSTANT"
+      (name "Timeout")
+      (subType "Integer")
+      (interface
+       (sequence in)
+       (sequence out)
+       (output 1
+        (name "Int32")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component value Int32
+        (data  100        )
+       )
+       (component initValue Int32
+        (data  0        )
+       )
+      )
+      (views
+       (icon
+        (origin 552 293)
+        (extent 76 14)
+       )
+       (detail
+        (origin 434 325)
+        (extent 92 30)
+        (showFormat int)
+       )
+       (active detail)
+      )
+     )
+     (component 9 "TEXTDISPLAY"
+      (name "Sending driver :")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "Data")
+       )
+      )
+      (implementation
+       (component clearAtPrerun 1)
+       (component clearAtActivate 1)
+      )
+      (views
+       (icon
+        (extent 110 0)
+       )
+       (detail
+        (origin 477 406)
+        (extent 146 28)
+       )
+       (active detail)
+      )
+     )
+     (component 10 "FORMULA"
+      (name "A[B]")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "B")
+        (optional yes)
+       )
+       (input 2
+        (name "A")
+        (optional yes)
+       )
+       (output 1
+        (name "Result")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component expr 1 "A[B]")
+      )
+      (views
+       (icon
+        (origin 382 408)
+        (extent 36 25)
+       )
+       (detail
+        (origin 454 409)
+        (extent 72 42)
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 11 "IODEVICE"
+      (name "E1406 ( @ (NOT LIVE))")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (type control)
+        (name "Timeout")
+        (requires
+         (datatype Real)
+         (shape "Scalar")
+        )
+        (lock name constraints)
+        (optional yes)
+       )
+      )
+      (implementation
+       (comp iopath "E1406")
+      )
+      (views
+       (icon
+        (origin 520 431)
+        (extent 140 18)
+       )
+       (detail
+        (origin 466 487)
+        (extent 198 27)
+       )
+       (terminals on)
+       (active detail)
+      )
+     )
+     (component 12 "CONSTANT"
+      (name "Timeout")
+      (subType "Integer")
+      (interface
+       (sequence in)
+       (sequence out)
+       (output 1
+        (name "Int32")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component value Int32
+        (data  1        )
+       )
+       (component initValue Int32
+        (data  0        )
+       )
+      )
+      (views
+       (icon
+        (origin 362 433)
+        (extent 76 14)
+       )
+       (detail
+        (origin 254 485)
+        (extent 92 30)
+        (showFormat int)
+       )
+       (active detail)
+      )
+     )
+     (configuration
+      (connect I1:1 D0:1)
+      (connect I2:1 D0:2)
+      (connect I2:1 D1:1)
+      (connect D1:1 D2:1)
+      (connect D0:1 D3:1)
+      (connect D2:1 D3:2)
+      (connect D3:1 D4:1)
+      (connect D4:1 D5:1)
+      (connect D4:2 D5:2)
+      (connect D6:1 D5:3)
+      (connect D8:1 D7:1)
+      (connect D2:1 D8:1)
+      (connect I2:1 D8:2)
+      (connect D10:1 D9:1)
+      (connect D2:0 D10:0)
+     )
+     (ShowOnExecPanel
+      (origin 382 331)
+      (extent 260 52)
+      (panel
+       (origin 404 280)
+       (extent 260 52)
+       (widget 7 detail
+        (title on)
+        (borderStyle flat)
+        (origin 406 300)
+        (extent 256 28)
+       )
+      )
+     )
+    )
+    (views
+     (detail
+      (origin 89 108)
+      (extent 877 472)
+      (configuration
+       (connect I1:1 D0:1
+        (Point 89 220)
+        (Point 198 220)
+        (Point 198 230)
+        (Point 280 230)
+       )
+       (connect I2:1 D0:2
+        (Point 89 460)
+        (Point 130 460)
+        (Point 130 250)
+        (Point 280 250)
+       )
+       (connect I2:1 D1:1
+        (Point 89 460)
+        (Point 130 460)
+        (Point 130 280)
+        (Point 154 280)
+       )
+       (connect D1:1 D2:1
+        (Point 246 280)
+        (Point 254 280)
+       )
+       (connect D0:1 D3:1
+        (Point 320 240)
+        (Point 350 240)
+        (Point 350 260)
+        (Point 368 260)
+       )
+       (connect D2:1 D3:2
+        (Point 346 280)
+        (Point 368 280)
+       )
+       (connect D3:1 D4:1
+        (Point 411 270)
+        (Point 426 270)
+       )
+       (connect D4:1 D5:1
+        (Point 534 260)
+        (Point 540 260)
+        (Point 540 250)
+        (Point 557 250)
+       )
+       (connect D4:2 D5:2
+        (Point 534 270)
+        (Point 557 270)
+       )
+       (connect D6:1 D5:3
+        (Point 528 340)
+        (Point 550 340)
+        (Point 550 290)
+        (Point 557 290)
+       )
+       (connect D8:1 D7:1
+        (Point 420 420)
+        (Point 474 420)
+       )
+       (connect D2:1 D8:1
+        (Point 346 280)
+        (Point 360 280)
+        (Point 360 410)
+        (Point 379 410)
+       )
+       (connect I2:1 D8:2
+        (Point 89 460)
+        (Point 130 460)
+        (Point 130 430)
+        (Point 379 430)
+       )
+       (connect D10:1 D9:1
+        (Point 348 500)
+        (Point 403 500)
+       )
+       (connect D2:0 D10:0
+        (Point 300 290)
+        (Point 300 464)
+       )
+      )
+      (stackingOrder 2 1 0 10 9 8 7 3 4 5
+        6)
+     )
+     (terminals on)
+     (active detail)
+    )
+   )
+   (context 3
+    (name "RebootE1406")
+    (interface
+     (sequence in)
+     (sequence out)
+    )
+    (implementation
+     (locked no)
+     (trigMode deg)
+     (nextID 10)
+     (popupTitle off)
+     (popupBorder off)
+     (component 0 "IODEVICE"
+      (name "E1406 ( @ (NOT LIVE))")
+      (interface
+       (sequence in)
+       (sequence out)
+      )
+      (implementation
+       (comp iopath "E1406")
+       (procedure
+         WRITE TEXT "DIAG:BOOT:WARM" EOL
+       )
+      )
+      (views
+       (icon
+        (origin 330 243)
+        (extent 140 15)
+       )
+       (detail
+        (origin 235 202)
+        (extent 291 36)
+       )
+       (terminals on)
+       (active detail)
+      )
+     )
+     (component 1 "REPEATUNTILBREAK"
+      (interface
+       (sequence in)
+       (sequence out)
+       (output 1
+        (name "Continuous")
+        (lock name constraints)
+       )
+      )
+      (implementation
+      )
+      (views
+       (icon
+        (origin 343 332)
+        (extent 74 16)
+       )
+       (detail
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 2 "IODEVICE"
+      (name "E1406 ( @ (NOT LIVE))")
+      (interface
+       (sequence in)
+       (sequence out)
+       (output 1
+        (name "X")
+        (lock constraints)
+        (optional yes)
+       )
+       (output 2
+        (type exception)
+        (name "Error")
+        (lock name constraints)
+        (optional yes)
+       )
+      )
+      (implementation
+       (comp iopath "E1406")
+       (procedure
+         WRITE TEXT "*OPC" EOL
+       )
+      )
+      (views
+       (icon
+        (origin 450 368)
+        (extent 140 25)
+       )
+       (detail
+        (origin 502 393)
+        (extent 207 35)
+       )
+       (terminals on)
+       (active detail)
+      )
+     )
+     (component 3 "BREAK"
+      (interface
+       (sequence in)
+      )
+      (implementation
+      )
+      (views
+       (icon
+        (origin 850 462)
+        (extent 41 16)
+       )
+       (detail
+       )
+       (terminals on)
+       (active icon)
+      )
+     )
+     (component 4 "DELAY"
+      (interface
+       (sequence in)
+       (sequence out)
+       (output 1
+        (name "Done")
+        (tag "Done")
+        (lock constraints)
+       )
+      )
+      (implementation
+       (component delay 1)
+      )
+      (views
+       (icon
+        (origin 700 432)
+        (extent 40 16)
+       )
+       (detail
+        (origin 752 464)
+        (extent 76 32)
+       )
+       (active detail)
+      )
+     )
+     (component 6 "LABEL"
+      (name "Rebooting the E1406 command module")
+      (interface
+       (sequence in)
+       (sequence out)
+      )
+      (implementation
+       (component labelValue "Rebooting the E1406 command module")
+      )
+      (views
+       (icon
+        (extent 250 0)
+       )
+       (detail
+        (origin 217 468)
+        (extent 247 25)
+        (just l)
+       )
+       (title off)
+       (active detail)
+      )
+     )
+     (component 7 "DELAY"
+      (interface
+       (sequence in)
+       (sequence out)
+       (output 1
+        (name "Done")
+        (tag "Done")
+        (lock constraints)
+       )
+      )
+      (implementation
+       (component delay 1)
+      )
+      (views
+       (icon
+        (origin 500 432)
+        (extent 40 16)
+       )
+       (detail
+        (origin 572 464)
+        (extent 76 32)
+       )
+       (active detail)
+      )
+     )
+     (component 8 "DELAY"
+      (interface
+       (sequence in)
+       (sequence out)
+       (output 1
+        (name "Done")
+        (tag "Done")
+        (lock constraints)
+       )
+      )
+      (implementation
+       (component delay 2)
+      )
+      (views
+       (icon
+        (origin 500 432)
+        (extent 40 16)
+       )
+       (detail
+        (origin 342 274)
+        (extent 76 32)
+       )
+       (active detail)
+      )
+     )
+     (component 9 "DELAY"
+      (interface
+       (sequence in)
+       (sequence out)
+       (output 1
+        (name "Done")
+        (tag "Done")
+        (lock constraints)
+       )
+      )
+      (implementation
+       (component delay 1)
+      )
+      (views
+       (icon
+        (origin 500 432)
+        (extent 40 16)
+       )
+       (detail
+        (origin 342 394)
+        (extent 76 32)
+       )
+       (active detail)
+      )
+     )
+     (configuration
+      (connect D7:0 D1:0)
+      (connect D1:1 D2:0)
+      (connect D2:1 D3:0)
+      (connect D2:2 D4:0)
+      (connect D2:0 D6:0)
+      (connect D0:0 D7:0)
+      (connect D1:0 D8:0)
+     )
+     (ShowOnExecPanel
+      (origin 371 343)
+      (extent 283 29)
+      (panel
+       (origin 371 330)
+       (extent 283 29)
+       (widget 5 detail
+        (title off)
+        (borderStyle none)
+        (origin 371 330)
+        (extent 280 30)
+        (just l)
+       )
+      )
+     )
+    )
+    (views
+     (detail
+      (origin 190 170)
+      (extent 779 348)
+      (configuration
+       (connect D7:0 D1:0
+        (Point 380 308)
+        (Point 380 329)
+       )
+       (connect D1:1 D2:0
+        (Point 419 340)
+        (Point 610 340)
+        (Point 610 372)
+       )
+       (connect D2:1 D3:0
+        (Point 751 400)
+        (Point 870 400)
+        (Point 870 459)
+       )
+       (connect D2:2 D4:0
+        (Point 751 420)
+        (Point 790 420)
+        (Point 790 443)
+       )
+       (connect D2:0 D6:0
+        (Point 610 430)
+        (Point 610 443)
+       )
+       (connect D0:0 D7:0
+        (Point 380 240)
+        (Point 380 253)
+       )
+       (connect D1:0 D8:0
+        (Point 380 350)
+        (Point 380 373)
+       )
+      )
+      (stackingOrder 1 5 0 7 3 4 2 6 8)
+     )
+     (active detail)
+    )
+   )
+   (context 5
+    (name "DefMemoryE1406")
+    (interface
+     (sequence in)
+     (sequence out)
+     (input 1
+      (name "Dram")
+      (optional yes)
+     )
+     (input 2
+      (name "Alldvr")
+      (optional yes)
+     )
+     (input 3
+      (name "Nram")
+      (optional yes)
+     )
+     (input 4
+      (name "Rdisk")
+      (optional yes)
+     )
+     (input 5
+      (name "Serial")
+      (optional yes)
+     )
+    )
+    (implementation
+     (locked no)
+     (trigMode deg)
+     (nextID 1)
+     (component 0 "IODEVICE"
+      (name "E1406 ( @ (NOT LIVE))")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (name "Dram")
+        (optional yes)
+       )
+       (input 2
+        (name "Alldvr")
+        (optional yes)
+       )
+       (input 3
+        (name "Nram")
+        (optional yes)
+       )
+       (input 4
+        (name "Rdisk")
+        (optional yes)
+       )
+       (input 5
+        (name "Serial")
+        (optional yes)
+       )
+      )
+      (implementation
+       (comp iopath "E1406")
+       (procedure
+         WRITE TEXT "DIAG:DRAM:CRE ", Dram, ",", totsize(Alldvr) EOL
+         WRITE TEXT "DIAG:NRAM:CRE ", Nram EOL
+         WRITE TEXT "DIAG:RDIS:CRE ", Rdisk EOL
+         WRITE TEXT "DIAG:COMM:SER:OWN ", Serial EOL
+       )
+      )
+      (views
+       (icon
+        (origin 660 293)
+        (extent 140 54)
+       )
+       (detail
+        (origin 404 236)
+        (extent 435 108)
+       )
+       (terminals on)
+       (active detail)
+      )
+     )
+     (configuration
+      (connect I1:1 D0:1)
+      (connect I2:1 D0:2)
+      (connect I3:1 D0:3)
+      (connect I4:1 D0:4)
+      (connect I5:1 D0:5)
+     )
+    )
+    (views
+     (detail
+      (origin 299 184)
+      (extent 635 213)
+      (configuration
+       (connect I1:1 D0:1
+        (Point 299 210)
+        (Point 321 210)
+        (Point 321 250)
+        (Point 351 250)
+       )
+       (connect I2:1 D0:2
+        (Point 299 250)
+        (Point 311 250)
+        (Point 311 270)
+        (Point 351 270)
+       )
+       (connect I3:1 D0:3
+        (Point 299 290)
+        (Point 351 290)
+       )
+       (connect I4:1 D0:4
+        (Point 299 330)
+        (Point 311 330)
+        (Point 311 310)
+        (Point 351 310)
+       )
+       (connect I5:1 D0:5
+        (Point 299 370)
+        (Point 311 370)
+        (Point 311 330)
+        (Point 351 330)
+       )
+      )
+     )
+     (terminals on)
+     (active detail)
+    )
+   )
+   (context 6
+    (name "ReadConfidE1406")
+    (interface
+     (sequence in)
+     (sequence out)
+     (output 1
+      (type data)
+      (name "Drvrs")
+      (lock constraints)
+      (optional yes)
+     )
+     (output 2
+      (type data)
+      (name "Nram")
+      (lock constraints)
+      (optional yes)
+     )
+     (output 3
+      (type data)
+      (name "Rdisk")
+      (lock constraints)
+      (optional yes)
+     )
+     (output 4
+      (type data)
+      (name "Serial")
+      (lock constraints)
+      (optional yes)
+     )
+    )
+    (implementation
+     (locked no)
+     (trigMode deg)
+     (nextID 2)
+     (component 0 "CONSTANT"
+      (name "Timeout")
+      (subType "Integer")
+      (interface
+       (sequence in)
+       (sequence out)
+       (output 1
+        (name "Int32")
+        (lock name constraints)
+       )
+      )
+      (implementation
+       (component value Int32
+        (data  1        )
+       )
+       (component initValue Int32
+        (data  0        )
+       )
+      )
+      (views
+       (icon
+        (origin 102 372)
+        (extent 56 16)
+       )
+       (detail
+        (origin 84 365)
+        (extent 92 30)
+        (showFormat int)
+       )
+       (active detail)
+      )
+     )
+     (component 1 "IODEVICE"
+      (name "E1406 ( @ (NOT LIVE))")
+      (interface
+       (sequence in)
+       (sequence out)
+       (input 1
+        (type control)
+        (name "Timeout")
+        (requires
+         (datatype Real)
+         (shape "Scalar")
+        )
+        (lock name constraints)
+        (optional yes)
+       )
+       (output 1
+        (name "Drvrs")
+        (lock constraints)
+        (optional yes)
+       )
+       (output 2
+        (name "Nram")
+        (lock constraints)
+        (optional yes)
+       )
+       (output 3
+        (name "Rdisk")
+        (lock constraints)
+        (optional yes)
+       )
+       (output 4
+        (name "Serial")
+        (lock constraints)
+        (optional yes)
+       )
+      )
+      (implementation
+       (comp iopath "E1406")
+       (procedure
+         EXECUTE CLEAR
+         WRITE TEXT "DIAG:DRIV:LIST:RAM?" EOL
+         READ TEXT Drvrs STR
+         WRITE TEXT "DIAG:NRAM:CRE?" EOL
+         READ TEXT Nram REAL
+         WRITE TEXT "DIAG:RDIS:CRE?" EOL
+         READ TEXT Rdisk REAL
+         WRITE TEXT "DIAG:COMM:SER:OWN?" EOL
+         READ TEXT Serial STR
+       )
+      )
+      (views
+       (icon
+        (origin 360 343)
+        (extent 140 54)
+       )
+       (detail
+        (origin 291 298)
+        (extent 348 164)
+       )
+       (terminals on)
+       (active detail)
+      )
+     )
+     (configuration
+      (connect D0:0 D1:0)
+      (connect D0:1 D1:1)
+      (connect D1:1 O1:1)
+      (connect D1:2 O2:1)
+      (connect D1:3 O3:1)
+      (connect D1:4 O4:1)
+     )
+    )
+    (views
+     (detail
+      (origin 53 247)
+      (extent 695 267)
+      (configuration
+       (connect D0:0 D1:0
+        (Point 130 397)
+        (Point 130 420)
+        (Point 200 420)
+        (Point 200 260)
+        (Point 460 260)
+        (Point 460 277)
+       )
+       (connect D0:1 D1:1
+        (Point 178 380)
+        (Point 228 380)
+       )
+       (connect D1:1 O1:1
+        (Point 691 320)
+        (Point 710 320)
+        (Point 710 290)
+        (Point 747 290)
+       )
+       (connect D1:2 O2:1
+        (Point 691 360)
+        (Point 710 360)
+        (Point 710 350)
+        (Point 747 350)
+       )
+       (connect D1:3 O3:1
+        (Point 691 400)
+        (Point 710 400)
+        (Point 710 410)
+        (Point 747 410)
+       )
+       (connect D1:4 O4:1
+        (Point 691 440)
+        (Point 710 440)
+        (Point 710 470)
+        (Point 747 470)
+       )
+      )
+      (stackingOrder 1 0)
+     )
+     (terminals on)
+     (active detail)
+    )
+   )
+  )
+  (locked no)
+  (trigMode deg)
+  (nextID 66)
+  (component 6 "TEXTDISPLAY"
+   (name "Total DRAM Size used")
+   (interface
+    (sequence in)
+    (sequence out)
+    (input 1
+     (name "Data")
+    )
+   )
+   (implementation
+    (component clearAtPrerun 1)
+    (component clearAtActivate 1)
+   )
+   (views
+    (icon
+     (extent 155 0)
+    )
+    (detail
+     (origin 800 167)
+     (extent 180 26)
+     (formatter
+      (realFormat fixed)
+      (realSigDigits 8)
+      (realRadixSpec 0)
+      (integerBase decimal)
+     )
+    )
+    (active detail)
+   )
+  )
+  (component 8 "LITERALCONSTANT"
+   (name "Files")
+   (interface
+    (sequence in)
+    (sequence out)
+    (output 1
+     (name "Text")
+     (lock name constraints)
+    )
+   )
+   (implementation
+    (component value Text
+     (numDims 1)
+     (size 1)
+     (data 
+       [ "RS232.DU" ]
+     )
+    )
+    (component initValue Text
+     (data  ""     )
+    )
+   )
+   (views
+    (icon
+     (extent 34 0)
+    )
+    (detail
+     (origin 332 224)
+     (extent 156 52)
+    )
+    (active detail)
+   )
+  )
+  (component 9 "LITERALCONSTANT"
+   (name "Directory")
+   (interface
+    (sequence in)
+    (sequence out)
+    (output 1
+     (name "Text")
+     (lock name constraints)
+    )
+   )
+   (implementation
+    (component value Text
+     (data  ""     )
+    )
+    (component initValue Text
+     (data  ""     )
+    )
+   )
+   (views
+    (icon
+     (extent 62 0)
+    )
+    (detail
+     (origin 331 156)
+     (extent 159 28)
+    )
+    (active detail)
+   )
+  )
+  (component 23 "CALL"
+   (name "Call GetDramSize")
+   (interface
+    (sequence in)
+    (sequence out)
+    (input 1
+     (name "Directory")
+     (optional yes)
+    )
+    (input 2
+     (name "Files")
+     (optional yes)
+    )
+    (output 1
+     (name "Data")
+     (lock name constraints)
+     (optional yes)
+    )
+   )
+   (implementation
+    (component callFunc "GetDramSize")
+    (component parmMode "rev30")
+   )
+   (views
+    (icon
+     (origin 649 168)
+     (extent 122 25)
+    )
+    (detail
+     (origin 502 424)
+     (extent 196 53)
+    )
+    (terminals on)
+    (active icon)
+   )
+  )
+  (component 24 "CONSTANT"
+   (name "# Bytes NRAM")
+   (subType "Real")
+   (interface
+    (sequence in)
+    (sequence out)
+    (input 1
+     (type control)
+     (name "Default Value")
+     (requires
+      (datatype Real)
+     )
+     (lock name constraints)
+     (optional yes)
+    )
+    (output 1
+     (name "Real")
+     (lock name constraints)
+    )
+   )
+   (implementation
+    (component value Real
+     (data  0     )
+    )
+    (component initValue Real
+     (data  0     )
+    )
+   )
+   (views
+    (icon
+     (extent 99 0)
+    )
+    (detail
+     (origin 333 305)
+     (extent 154 31)
+     (showFormat real)
+    )
+    (active detail)
+   )
+  )
+  (component 25 "CONSTANT"
+   (name "# Bytes RAM DISK")
+   (subType "Real")
+   (interface
+    (sequence in)
+    (sequence out)
+    (input 1
+     (type control)
+     (name "Default Value")
+     (requires
+      (datatype Real)
+     )
+     (lock name constraints)
+     (optional yes)
+    )
+    (output 1
+     (name "Real")
+     (lock name constraints)
+    )
+   )
+   (implementation
+    (component value Real
+     (data  0     )
+    )
+    (component initValue Real
+     (data  0     )
+    )
+   )
+   (views
+    (icon
+     (extent 127 0)
+    )
+    (detail
+     (origin 334 367)
+     (extent 152 26)
+     (showFormat real)
+    )
+    (active detail)
+   )
+  )
+  (component 26 "ENUMCONSTANT"
+   (name "ASSIGN RS232 port to :")
+   (interface
+    (sequence in)
+    (sequence out)
+    (input 1
+     (type control)
+     (name "Default Value")
+     (requires
+      (datatype Text)
+      (shape "Scalar")
+     )
+     (lock name constraints)
+     (optional yes)
+    )
+    (output 1
+     (name "Enum")
+     (lock name constraints)
+    )
+   )
+   (implementation
+    (component value Enum
+     (values
+      ( "SYST" 0)
+      ( "IBAS" 1)
+     )
+     (data  "SYST"     )
+    )
+    (component initValue Text
+     (data  "IBAS"     )
+    )
+   )
+   (views
+    (icon
+     (extent 165 0)
+    )
+    (detail
+     (origin 334 432)
+     (extent 152 37)
+     (format scrollList)
+    )
+    (active detail)
+   )
+  )
+  (component 27 "CONFIRM25"
+   (name "Continue")
+   (interface
+    (sequence in)
+    (sequence out)
+    (output 1
+     (name "Go")
+     (lock name constraints)
+    )
+   )
+   (implementation
+    (component enterButton yes)
+    (component escapeButton yes)
+   )
+   (views
+    (icon
+     (extent 62 0)
+    )
+    (detail
+     (origin 355 100)
+     (extent 111 20)
+    )
+    (title off)
+    (active detail)
+   )
+  )
+  (component 33 "START25"
+   (interface
+    (sequence out)
+   )
+   (implementation
+   )
+   (views
+    (icon
+    )
+    (detail
+     (origin 387 59)
+     (extent 47 22)
+    )
+    (title off)
+    (active detail)
+   )
+  )
+  (component 34 "CALL"
+   (name "Call SendDrivers")
+   (interface
+    (sequence in)
+    (sequence out)
+    (input 1
+     (name "Directory")
+     (optional yes)
+    )
+    (input 2
+     (name "Files")
+     (optional yes)
+    )
+   )
+   (implementation
+    (component callFunc "SendDrivers")
+    (component parmMode "rev30")
+   )
+   (views
+    (icon
+     (origin 652 338)
+     (extent 116 25)
+    )
+    (detail
+     (origin 617 394)
+     (extent 196 53)
+    )
+    (terminals on)
+    (active icon)
+   )
+  )
+  (component 40 "TEXTDISPLAY"
+   (name "Currently loaded drivers")
+   (interface
+    (sequence in)
+    (sequence out)
+    (input 1
+     (name "Data")
+    )
+   )
+   (implementation
+    (component clearAtPrerun 1)
+    (component clearAtActivate 1)
+   )
+   (views
+    (icon
+     (extent 167 0)
+    )
+    (detail
+     (origin 138 503)
+     (extent 305 34)
+    )
+    (active detail)
+   )
+  )
+  (component 42 "NOTE"
+   (interface
+   )
+   (implementation
+    (component text 20 5
+     
+     - This program needs one 'Direct IO' definition by the name of 'E1406'
+       it should refer to subaddress 00 If the E1406 hp-ib is at 709 then use 70900
+       Loading the program has already prompted you to create this 'E1406' definition
+       Please check the address value for this 'E1406' definition.
+     - Run the program
+     - The current settings for NRAM, RAM Disk size,and RS232 port assignment are
+       shown and can be changed if needed.
+     - Information of all currently loaded downloadable drivers is shown
+     - Enter the full path and name of the directory with the downloadable drivers
+       as in c:\mydrivers\ or /users/me/mydrivers/ (no entry = current directory)
+     - Enter the file names of the downloadable driver files that you wish to send
+       to the E1406 command module over hp-ib. These must be the .DU files (NOT .DC !!!)
+     - Press 'Continue' to allow the program to continue which will :
+       - Remove all of the currently loaded drivers.
+       - Destroy all contents in the current RAM Disk (if any)
+       - Download the drivers that you entered by filename in the box 'Files'.
+       - Take a little longer than you expected.
+       To prevent the program from doing all this press the hpvee main 'Stop' button
+       in place of the 'Continue' button.
+    )
+   )
+   (views
+    (icon
+     (origin 466 484)
+     (extent 68 52)
+     (iconImage "notepad.icn")
+    )
+    (detail
+     (origin 107 326)
+     (extent 787 368)
+     (editing enabled)
+    )
+    (active icon)
+   )
+  )
+  (component 51 "CALL"
+   (name "Call RebootE1406")
+   (interface
+    (sequence in)
+    (sequence out)
+   )
+   (implementation
+    (component callFunc "RebootE1406")
+    (component parmMode "rev30")
+   )
+   (views
+    (icon
+     (origin 653 303)
+     (extent 115 15)
+    )
+    (detail
+     (origin 442 574)
+     (extent 196 53)
+    )
+    (terminals on)
+    (active icon)
+   )
+  )
+  (component 52 "CALL"
+   (name "Call RebootE1406")
+   (interface
+    (sequence in)
+    (sequence out)
+   )
+   (implementation
+    (component callFunc "RebootE1406")
+    (component parmMode "rev30")
+   )
+   (views
+    (icon
+     (origin 654 383)
+     (extent 113 15)
+    )
+    (detail
+     (origin 442 574)
+     (extent 196 53)
+    )
+    (terminals on)
+    (active icon)
+   )
+  )
+  (component 56 "IODEVICE"
+   (name "E1406 ( @ (NOT LIVE))")
+   (interface
+    (sequence in)
+    (sequence out)
+    (output 1
+     (name "Drvrs")
+     (lock constraints)
+     (optional yes)
+    )
+   )
+   (implementation
+    (comp iopath "E1406")
+    (procedure
+      WRITE TEXT "DIAG:DRIV:LIST:RAM?" EOL
+      READ TEXT Drvrs STR
+    )
+   )
+   (views
+    (icon
+     (origin 810 483)
+     (extent 140 14)
+    )
+    (detail
+     (origin 555 493)
+     (extent 310 55)
+    )
+    (active detail)
+   )
+  )
+  (component 58 "JUNCTION"
+   (name "JCT")
+   (interface
+    (input 1
+     (name "A")
+     (lock name constraints)
+    )
+    (input 2
+     (name "B")
+     (lock name constraints)
+    )
+    (output 1
+     (name "Data")
+     (lock name constraints)
+    )
+   )
+   (implementation
+   )
+   (views
+    (icon
+     (origin 86 508)
+     (extent 29 25)
+    )
+    (detail
+    )
+    (terminals on)
+    (active icon)
+   )
+  )
+  (component 63 "CALL"
+   (name "Call DefMemoryE1406")
+   (interface
+    (sequence in)
+    (sequence out)
+    (input 1
+     (name "Dram")
+     (optional yes)
+    )
+    (input 2
+     (name "Alldvr")
+     (optional yes)
+    )
+    (input 3
+     (name "Nram")
+     (optional yes)
+    )
+    (input 4
+     (name "Rdisk")
+     (optional yes)
+    )
+    (input 5
+     (name "Serial")
+     (optional yes)
+    )
+   )
+   (implementation
+    (component callFunc "DefMemoryE1406")
+    (component parmMode "rev30")
+   )
+   (views
+    (icon
+     (origin 644 233)
+     (extent 132 54)
+    )
+    (detail
+     (origin 482 239)
+     (extent 196 102)
+    )
+    (terminals on)
+    (active icon)
+   )
+  )
+  (component 65 "CALL"
+   (name "Call ReadConfigE1406")
+   (interface
+    (sequence in)
+    (sequence out)
+    (output 1
+     (name "Drvrs")
+     (lock name constraints)
+     (optional yes)
+    )
+    (output 2
+     (name "Nram")
+     (lock name constraints)
+     (optional yes)
+    )
+    (output 3
+     (name "Rdisk")
+     (lock name constraints)
+     (optional yes)
+    )
+    (output 4
+     (name "Serial")
+     (lock name constraints)
+     (optional yes)
+    )
+   )
+   (implementation
+    (component callFunc "ReadConfidE1406")
+    (component parmMode "rev30")
+   )
+   (views
+    (icon
+     (origin 123 308)
+     (extent 135 45)
+    )
+    (detail
+     (origin 102 349)
+     (extent 196 82)
+    )
+    (terminals on)
+    (active icon)
+   )
+  )
+  (configuration
+   (connect D3:1 D0:1)
+   (connect D2:0 D1:0)
+   (connect D7:0 D2:0)
+   (connect D2:1 D3:1)
+   (connect D1:1 D3:2)
+   (connect D1:0 D4:0)
+   (connect D17:2 D4:1)
+   (connect D4:0 D5:0)
+   (connect D17:3 D5:1)
+   (connect D5:0 D6:0)
+   (connect D17:4 D6:1)
+   (connect D8:0 D7:0)
+   (connect D12:0 D9:0)
+   (connect D2:1 D9:1)
+   (connect D1:1 D9:2)
+   (connect D15:1 D10:1)
+   (connect D16:0 D12:0)
+   (connect D9:0 D13:0)
+   (connect D13:0 D14:0)
+   (connect D17:1 D15:1)
+   (connect D14:1 D15:2)
+   (connect D3:0 D16:0)
+   (connect D3:1 D16:1)
+   (connect D1:1 D16:2)
+   (connect D4:1 D16:3)
+   (connect D5:1 D16:4)
+   (connect D6:1 D16:5)
+  )
+ )
+ (views
+  (panel
+   (origin 0 24)
+   (extent 1024 690)
+   (widget 4 detail
+    (title on)
+    (borderStyle flat)
+    (origin 12 124)
+    (extent 196 28)
+    (showFormat real)
+   )
+   (widget 5 detail
+    (title on)
+    (borderStyle flat)
+    (origin 12 184)
+    (extent 196 28)
+    (showFormat real)
+   )
+   (widget 6 detail
+    (title on)
+    (borderStyle flat)
+    (origin 12 244)
+    (extent 196 38)
+    (format scrollList)
+   )
+   (widget 2 detail
+    (title on)
+    (borderStyle flat)
+    (origin 222 124)
+    (extent 196 28)
+   )
+   (widget 1 detail
+    (title on)
+    (borderStyle flat)
+    (origin 432 124)
+    (extent 196 138)
+   )
+   (widget 0 detail
+    (title on)
+    (borderStyle flat)
+    (origin 832 124)
+    (extent 175 28)
+    (formatter
+     (realFormat fixed)
+     (realSigDigits 8)
+     (realRadixSpec 0)
+     (integerBase decimal)
+    )
+   )
+   (widget 10 detail
+    (title on)
+    (borderStyle flat)
+    (origin 12 54)
+    (extent 996 38)
+   )
+   (widget 11 detail
+    (title on)
+    (borderStyle flat)
+    (origin 112 314)
+    (extent 776 368)
+    (editing enabled)
+   )
+   (widget 7 detail
+    (title off)
+    (borderStyle none)
+    (origin 650 104)
+    (extent 160 50)
+   )
+  )
+  (detail
+   (origin 0 24)
+   (extent 1024 690)
+   (configuration
+    (connect D3:1 D0:1
+     (Point 773 180)
+     (Point 797 180)
+    )
+    (connect D2:0 D1:0
+     (Point 410 186)
+     (Point 410 203)
+    )
+    (connect D7:0 D2:0
+     (Point 410 122)
+     (Point 410 135)
+    )
+    (connect D2:1 D3:1
+     (Point 492 170)
+     (Point 646 170)
+    )
+    (connect D1:1 D3:2
+     (Point 490 250)
+     (Point 620 250)
+     (Point 620 190)
+     (Point 646 190)
+    )
+    (connect D1:0 D4:0
+     (Point 410 278)
+     (Point 410 284)
+    )
+    (connect D17:2 D4:1
+     (Point 260 320)
+     (Point 330 320)
+    )
+    (connect D4:0 D5:0
+     (Point 410 338)
+     (Point 410 346)
+    )
+    (connect D17:3 D5:1
+     (Point 260 330)
+     (Point 280 330)
+     (Point 280 380)
+     (Point 331 380)
+    )
+    (connect D5:0 D6:0
+     (Point 410 395)
+     (Point 410 411)
+    )
+    (connect D17:4 D6:1
+     (Point 260 340)
+     (Point 270 340)
+     (Point 270 450)
+     (Point 331 450)
+    )
+    (connect D8:0 D7:0
+     (Point 410 83)
+     (Point 410 97)
+    )
+    (connect D12:0 D9:0
+     (Point 710 320)
+     (Point 710 335)
+    )
+    (connect D2:1 D9:1
+     (Point 492 170)
+     (Point 610 170)
+     (Point 610 340)
+     (Point 649 340)
+    )
+    (connect D1:1 D9:2
+     (Point 490 250)
+     (Point 600 250)
+     (Point 600 360)
+     (Point 649 360)
+    )
+    (connect D15:1 D10:1
+     (Point 117 520)
+     (Point 135 520)
+    )
+    (connect D16:0 D12:0
+     (Point 710 289)
+     (Point 710 300)
+    )
+    (connect D9:0 D13:0
+     (Point 710 365)
+     (Point 710 380)
+    )
+    (connect D13:0 D14:0
+     (Point 710 400)
+     (Point 710 472)
+    )
+    (connect D17:1 D15:1
+     (Point 260 310)
+     (Point 270 310)
+     (Point 270 290)
+     (Point 70 290)
+     (Point 70 510)
+     (Point 83 510)
+    )
+    (connect D14:1 D15:2
+     (Point 867 520)
+     (Point 890 520)
+     (Point 890 570)
+     (Point 60 570)
+     (Point 60 530)
+     (Point 83 530)
+    )
+    (connect D3:0 D16:0
+     (Point 710 195)
+     (Point 710 230)
+    )
+    (connect D3:1 D16:1
+     (Point 773 180)
+     (Point 780 180)
+     (Point 780 210)
+     (Point 630 210)
+     (Point 630 240)
+     (Point 641 240)
+    )
+    (connect D1:1 D16:2
+     (Point 490 250)
+     (Point 641 250)
+    )
+    (connect D4:1 D16:3
+     (Point 489 320)
+     (Point 510 320)
+     (Point 510 260)
+     (Point 641 260)
+    )
+    (connect D5:1 D16:4
+     (Point 488 380)
+     (Point 520 380)
+     (Point 520 270)
+     (Point 641 270)
+    )
+    (connect D6:1 D16:5
+     (Point 488 450)
+     (Point 530 450)
+     (Point 530 280)
+     (Point 641 280)
+    )
+   )
+   (stackingOrder 1 4 5 6 13 9 12 16 17 14
+     2 3 0 10 15 8 7 11)
+  )
+  (active panel)
+  (numberFormats
+   (realFormat standard)
+   (realSigDigits 4)
+   (realRadixSpec 4)
+   (integerBase decimal)
+  )
+ )
+)

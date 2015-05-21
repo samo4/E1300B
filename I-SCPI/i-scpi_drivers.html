@@ -1,0 +1,566 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta http-equiv="Content-Language" content="en-US" />
+  <style type="text/css">
+    @import url(other/min.css);
+  </style>
+
+  <title>Agilent | I-SCPI Drivers</title>
+
+</head>
+
+<body>
+
+<div id="header">
+  <div class="wrapper">
+    <div id="logo"><a href="http://www.agilent.com/" title="Agilent Technologies"><img src="other/agilentlogo.gif" width="293" height="91" alt="Agilent Technologies" /></a></div>
+    <div class="clearer"></div>
+  </div>
+  <div id="headerband"></div>
+</div> <!-- #header -->
+
+<div class="wrapper">
+
+  <h1>I-SCPI Drivers</h1>
+
+  <p class="box">
+    I-SCPI is not recommended for new designs because I-SCPI is
+    not supported on new hardware and current Agilent IO Libraries.
+  </p>
+
+  <p>
+    For background information about I-SCPI (Interpreted Standard
+    Commands for Programmable Instruments), see
+    <a href="http://www.agilent.com/find/inst_drivers">About Instrument Drivers</a>.
+  </p>
+
+  <p>
+    Register-based VXI modules installed in FireWire (E8491), Embedded
+    VXI Controllers (E623x, E985x, EPC-7, EPC-8), MXI, VXLink systems
+    (E1383, E1483), or National Instruments MXI-2 require an I-SCPI
+    driver to provide programming capability. This information does
+    not apply to message-based modules which have built-in SCPI
+    drivers.
+  </p>
+
+  <p>
+    This page contains links to:</p>
+  <ul>
+    <li>
+      <a href="#components"><strong>I-SCPI Components</strong></a>: 
+      necessary for use with Agilent I/O Libraries (used with the
+      I-SCPI VISA I/O drivers).
+    </li>
+    <li>
+      <a href="#visa"><strong>I-SCPI VISA Drivers</strong></a>: 
+      Agilent I-SCPI Instrument Drivers that use VISA I/O (these are
+      the most recent).
+    </li>
+    <li>
+      <a href="#sicl"><strong>I-SCPI SICL Drivers</strong></a>: 
+      Agilent I-SCPI Instrument Drivers that use SICL I/O (these are
+      the previous versions).
+    </li>
+  </ul>
+
+  <p>
+    Use your browser's Find feature (Ctrl-F) to quickly locate an
+    instrument's model number below.
+  </p>
+
+  <!-- ################################################## -->
+
+  <h2 id="components">I-SCPI Components</h2>
+
+  <p>
+    The I-SCPI components are necessary to use I-SCPI with current
+    Agilent I/O Libraries.  These are intended for use with the most
+    recent versions of I-SCPI that work with VISA I/O.
+  </p>
+  <p>
+    The I-SCPI components are contained in a self-extracting archive, 
+    <a href="./files/iscpi_io_components.exe">iscpi_io_components.exe</a>,
+    that should be unzipped into the I/O Libraries installation
+    directory, typically C:\Program Files\Agilent\IO Libraries.  If
+    you have placed the IO Libraries in some other directory, be sure
+    to use this other directory.
+  </p>
+
+  <!-- ################################################## -->
+
+  <h2 id="visa">I-SCPI VISA Drivers</h2>
+
+  <p>
+    These I-SCPI drivers work with VISA I/O and are associated with
+    the G.02.00 and later releases of the Agilent IO Libraries.
+  </p>
+
+  <p>
+    All of these I-SCPI VISA drivers are collected in a
+    self-extracting archive,
+    <a href="./files/all_visa_iscpi_drivers.exe">all_visa_iscpi_drivers.exe</a>,
+    that should be unzipped into the VXI<em>plug&amp;play</em> BIN
+    directory, typically 
+
+    C:\Program Files\VISA\<em>windir</em>\BIN or
+    C:\VXIPNP\<em>windir</em>\BIN, 
+
+    where <em>windir</em> is WINNT for NT/2000/XP or WIN95 for
+    95/98/Me.  
+
+    If you have placed the VXI<em>plug&amp;play</em> BIN in a
+    different place, be sure to use that other directory.
+  </p>
+
+  <p>
+    The drivers are also available as the following separate downloads.
+  </p>
+
+  <h3>Digital Multimeters and Multiplexers and Switches capable of DMM measurements and multiplexing</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpe132632v.dll"><strong>win95/NT: hpe132632v.dll (A.09.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1326B 5 1/2 Digit Multimeter</li>
+	<li>HP E1343A 16-Channel High Voltage Relay Multiplexer</li>
+	<li>HP E1344A 16-Channel Thermocouple High Voltage Relay Multiplexer</li>
+	<li>HP E1345A 16-Channel Relay Multiplexer</li>
+	<li>HP E1346A 48-Ch Single-Ended Relay Multiplexer</li>
+	<li>HP E1347A 16-Channel Thermocouple Relay Multiplexer</li>
+	<li>HP E1351A 16-Channel FET Multiplexer</li>
+	<li>HP E1352A 32-Channel Single-ended FET Multiplexer</li>
+	<li>HP E1353A 16-Channel Thermocouple FET Multiplexer</li>
+	<li>HP E1355A 8-Channel 120 Ohm Strain Relay Multiplexer</li>
+	<li>HP E1356A 8-Channel 350 Ohm Strain Relay Multiplexer</li>
+	<li>HP E1357A 8-Channel 120 Ohm Strain FET Multiplexer</li>
+	<li>HP E1358A 8-Channel 350 Ohm Strain FET Multiplexer</li>
+	<li>HP E1411B 5 1/2 Digit Multimeter</li>
+	<li>HP E1460A 64-Channel Relay Multiplexer</li>
+	<li>HP E1476A 64-Channel 3-wire Relay Multiplexer with Thermocouple Compensation</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3>Digital Multimeters combined with Multiplexer and Switches</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpescan32v.dll"><strong>win95/NT: hpescan32v.dll (A.09.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1326B 5 1/2 Digit Multimeter</li>
+	<li>HP E1411B 5 1/2 Digit Multimeter</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3> Multiplexer and Switches - stand-alone</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpeswit32v.dll"><strong>win95/NT: hpeswit32v.dll (A.09.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1361A 2-Wire 4x4 Relay Matrix</li>
+	<li>HP E1364A 16-Channel Form C Switch</li>
+	<li>HP E1366A Dual 1x4 50 Ohm RF Multiplexer</li>
+	<li>HP E1367A Dual 1x4 75 Ohm RF Multiplexer</li>
+	<li>HP E1368A 18 GHz Microwave Switch</li>
+	<li>HP E1369A Microwave Switch Driver</li>
+	<li>HP E1370A Microwave Switch/Step Attenuator Driver</li>
+	<li>HP E1442A 64-Channel, Form C or Form A VXI Switch</li>
+	<li>HP E1463A 32-Channel, 5 amp, Form C VXI Switch</li>
+	<li>HP E1465A 16x16 Relay Matrix Switch</li>
+	<li>HP E1466A 4x64 Relay Matrix Switch</li>
+	<li>HP E1467A 8x32 Relay Matrix Switch</li>
+	<li>HP E1468A 8x8 Relay Matrix Switch</li>
+	<li>HP E1469A 4x16 Relay Matrix Switch</li>
+	<li>HP E1472A Six 1x4 50 Ohm RF Multimeter</li>
+	<li>HP E1473A Six 1x4 50 Ohm RF Multiplexer Expander</li>
+	<li>HP E1474A Six 1x4 75 Ohm RF Multiplexer</li>
+	<li>HP E1475A Six 1x4 75 Ohm RF Multiplexer Expander</li>
+	<li>HP E1476A 64-Channel 3-wire Relay Multiplexer with Thermocouple Compensation</li>
+	</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/hpe846032v.dll"><strong>win95/NT: hpe846032v.dll (G.01.06)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+      	<li>HP E8460A 256-Channel High-Density Reed Relay Multiplexer
+      </ul>
+    </dd>
+
+  </dl>
+
+  <h3>Switches</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpe147032v.dll"><strong>win95/NT: hpe147032v.dll (G.01.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1470A 60-Channel 50 ohm; RF Multiplexer</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3>Agilent Distributed Bancomm BANC 350 VXI IRIGB Clock/Timer</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpirig32v.dll"><strong>win95/NT: hpirig32v.dll (G.01.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP BANC-350 IRIG B Time Code Processor Card Bundle</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3>A/D Converters</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpe141332v.dll"><strong>win95/NT: hpe141332v.dll (G.01.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1313A 32-Channel Scanning A/D Converter</li>
+	<li>HP E1413A 64-Channel Scanning A/D Converter</li>
+	<li>HP E1413B 64-Channel Scanning A/D Converter</li>
+	<li>HP E1413C 64-Channel Scanning A/D Converter</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/hpe141432v.dll"><strong>win95/NT: hpe141432v.dll (G.01.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1414A Pressure Scanning A/D Converter</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3>D/A Converters</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpe132832v.dll"><strong>win95/NT: hpe132832v.dll (G.01.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1328A 4-Channel D/A Converter</li>
+      </ul>
+    </dd> 
+    <dt>
+      <a href="./files/hpe141832v.dll"><strong>win95/NT: hpe141832v.dll (G.01.07)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1418A 8/16 Channel Digital to Analog Converter</li>
+      </ul>
+    </dd>
+
+    <dt>
+      <a href="./files/hpe142232v.dll"><strong>win95/NT: hpe142232v.dll (G.01.10)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1422A Remote Channel Multi-function DAC Module</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/hpe144632v.dll"><strong>win95/NT: hpe144632v.dll (G.01.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1446A Summing Amplifier/DAC</li>
+      </ul>
+    </dd>
+  </dl>
+    
+  <h3>Digital I/O</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpdig_i32v.dll"><strong>win95/NT: hpdig_i32v.dll (G.04.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>  
+	<li>HP E1330B Quad 8-Bit Digital Input/Output</li>
+	<li>HP E1458A 96-Channel Digital Input/Output</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/hpe133932v.dll"><strong>win95/NT: hpe133932v.dll (G.01.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>  
+	<li>HP E1339A 72-Channel Digital Output/Relay Driver</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3>Counters</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpe133232v.dll"><strong>win95/NT: hpe133232v.dll (G.01.02)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1332A 4-Channel Counter/Totalizer</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/hpe133332v.dll"><strong>win95/NT: hpe133332v.dll (G.01.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1333A 3-Channel Universal Counter</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3>Arbitrary Function Generators</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpe134032v.dll"><strong>win95/NT: hpe134032v.dll (G.01.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1340A Arbitrary Function Generator</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3>Algorithmic Closed-Loop Controller and Multifunction Plus module</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpe141532v.dll"><strong>win95/NT: hpe141532v.dll (G.01.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1415A Algorithmic Closed Loop Controller</li>
+	<li>HP E1418A 8/16 Channel Digital to Analog Converter</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3>Memory Cards</h3>
+  <dl>
+    <dt>
+      <a href="./files/hpe148832v.dll"><strong>win95/NT: hpe148832v.dll (G.01.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1488A 2 to 16 Mbyte Instrument Memory Module (Note: this driver is not supported on VXLink)</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <!-- ################################################## -->
+
+  <h2 id="sicl">I-SCPI SICL Drivers</h2>
+
+  <p>
+    These I-SCPI drivers work with SICL I/O and are associated with
+    the G.01.00 and earlier releases of the Agilent IO Libraries.
+  </p>
+
+  <dl>
+    <dt>
+      <a href="./files/escan32.dll"><strong>win95: escan32.dll (G.08.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1326A 5 1/2 Digit Multimeter</li>
+	<li>HP E1326B 5 1/2 Digit Multimeter</li>
+	<li>HP E1411A 5 1/2 Digit Multimeter</li>
+	<li>HP E1411B 5 1/2 Digit Multimeter</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/eswitc32.dll"><strong>win95: eswitc32.dll (G.08.03)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1361A 2-Wire 4x4 Relay Matrix</li>
+	<li>HP E1364A 16-Channel Form C Switch</li>
+	<li>HP E1366A Dual 1x4 50 Ohm RF Multiplexer</li>
+	<li>HP E1367A Dual 1x4 75 Ohm RF Multiplexer</li>
+	<li>HP E1368A 18 GHz Microwave Switch</li>
+	<li>HP E1369A Microwave Switch Driver</li>
+	<li>HP E1370A Microwave Switch/Step Attenuator Driver</li>
+	<li>HP E1442A 64-Channel, Form C or Form A VXI Switch</li>
+	<li>HP E1463A 32-Channel, 5 amp, Form C VXI Switch</li>
+	<li>HP E1465A 16x16 Relay Matrix Switch</li>
+	<li>HP E1466A 4x64 Relay Matrix Switch</li>
+	<li>HP E1467A 8x32 Relay Matrix Switch</li>
+	<li>HP E1468A 8x8 Relay Matrix Switch</li>
+	<li>HP E1469A 4x16 Relay Matrix Switch</li>
+	<li>HP E1472A Six 1x4 50 Ohm RF Multimeter</li>
+	<li>HP E1473A Six 1x4 50 Ohm RF Multiplexer Expander</li>
+	<li>HP E1474A Six 1x4 75 Ohm RF Multiplexer</li>
+	<li>HP E1475A Six 1x4 75 Ohm RF Multiplexer Expander</li>
+	<li>HP E1476A 64-Channel 3-wire Relay Multiplexer with Thermocouple Compensation</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/irig32.dll"><strong>win95: irig32.dll (G.02.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP BANC-350 IRIG B Time Code Processor Card Bundle</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/mil15532.dll"><strong>win95: mil15532.dll (G.02.03)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP DDCC-1553 Mil-Std-1553 VXI Card Bundle</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e141332.dll"><strong>win95: e141332.dll (G.09.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1313A 32-Channel Scanning A/D Converter</li>
+	<li>HP E1413A 64-Channel Scanning A/D Converter</li>
+	<li>HP E1413B 64-Channel Scanning A/D Converter</li>
+	<li>HP E1413C 64-Channel Scanning A/D Converter</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e132632.dll"><strong>win95: e132632.dll (G.06.04)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1326A 5 1/2 Digit Multimeter</li>
+	<li>HP E1326B 5 1/2 Digit Multimeter</li>
+	<li>HP E1343A 16-Channel High Voltage Relay Multiplexer</li>
+	<li>HP E1344A 16-Channel Thermocouple High Voltage Relay Multiplexer</li>
+	<li>HP E1345A 16-Channel Relay Multiplexer</li>
+	<li>HP E1346A 48-Ch Single-Ended Relay Multiplexer</li>
+	<li>HP E1347A 16-Channel Thermocouple Relay Multiplexer</li>
+	<li>HP E1351A 16-Channel FET Multiplexer</li>
+	<li>HP E1352A 32-Channel Single-ended FET Multiplexer</li>
+	<li>HP E1353A 16-Channel Thermocouple FET Multiplexer</li>
+	<li>HP E1355A 8-Channel 120 Ohm Strain Relay Multiplexer</li>
+	<li>HP E1356A 8-Channel 350 Ohm Strain Relay Multiplexer</li>
+	<li>HP E1357A 8-Channel 120 Ohm Strain FET Multiplexer</li>
+	<li>HP E1358A 8-Channel 350 Ohm Strain FET Multiplexer</li>
+	<li>HP E1411A 5 1/2 Digit Multimeter</li>
+	<li>HP E1411B 5 1/2 Digit Multimeter</li>
+	<li>HP E1460A 64-Channel Relay Multiplexer</li>
+	<li>HP E1476A 64-Channel 3-wire Relay Multiplexer with Thermocouple Compensation</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e132832.dll"><strong>win95: e132832.dll (G.04.02)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1328A 4-Channel D/A Converter</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/dig_io32.dll"><strong>win95: dig_io32.dll (G.05.04)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1330B Quad 8-Bit Digital Input/Output</li>
+	<li>HP E1458A 96-Channel Digital Input/Output</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e133232.dll"><strong>win95: e133232.dll (G.04.07)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1332A 4-Channel Counter/Totalizer</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e133332.dll"><strong>win95: e133332.dll (G.04.07)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1333A 3-Channel Universal Counter</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e134032.dll"><strong>win95: e134032.dll (G.01.03)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1340A Arbitrary Function Generator</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e141532.dll"><strong>win95 (E1419A untested as of Oct 1997): e141532.dll (G.02.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1415A Algorithmic Closed Loop Controller</li>
+	<li>HP E1419A Multifunction Measurement Control</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e141832.dll"><strong>win95: e141832.dll (G.01.02)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1418A 8/16 Channel Digital to Analog Converter</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e144632.dll"><strong>win95: e144632.dll (G.01.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1446A Summing Amplifier/DAC</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e145032.dll"><strong>win95: e145032.dll (G.02.06)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1450A 160 MHz, 12-Channel Timing Module</li>
+	<li>HP E1451A 20 MHz Pattern I/O Module, 32 I/O Pins</li>
+	<li>HP E1452A Terminating 20 MHz Pattern I/O Module</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e147032.dll"><strong>win95: e147032.dll (G.01.00)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1470A 60-Channel 50 Ohm RF Multiplexer</li>
+      </ul>
+    </dd>
+    <dt>
+      <a href="./files/e148832.dll"><strong>win95 (no VXLink): e148832.dll (G.01.01)</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>HP E1488A 2 to 16 Mbyte Instrument Memory Module</li>
+      </ul>
+    </dd>
+  </dl>
+</div>
+<div id="footer">
+  <div class="wrapper">
+    <p id="copyright">&copy; Agilent 2000-2012</p>
+  </div>
+</div> 
+<!-- kkh/2012-09-20 -->
+
+</body>
+</html>
+

@@ -1,0 +1,709 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta http-equiv="Content-Language" content="en-US" />
+  <style type="text/css">
+    @import url(other/min.css);
+  </style>
+
+  <title>Agilent | D-SCPI Drivers</title>
+
+</head>
+
+<body>
+
+<div id="header">
+  <div class="wrapper">
+    <div id="logo"><a href="http://www.agilent.com/" title="Agilent Technologies"><img src="other/agilentlogo.gif" width="293" height="91" alt="Agilent Technologies" /></a></div>
+    <div class="clearer"></div>
+  </div>
+  <div id="headerband"></div>
+</div> <!-- #header -->
+
+<div class="wrapper">
+
+  <h1>D-SCPI Drivers</h1>
+
+  <p>
+    This page contains information about the Agilent SCPI (Standard
+    Commands for Programmable Instruments) Instrument Drivers to
+    download into Agilent VXI Command Modules (E1300, E1301, E1306,
+    E1405, E1406).
+  </p>
+  <ul>
+    <li>Use the <strong>.dc</strong> files to download into the VXI Command Module via <strong>RS-232 Serial</strong>.</li>
+    <li>Use the <strong>.du</strong> files to download into the VXI Command Module via <strong>GPIB</strong>.</li>
+  </ul>
+
+  <p>
+    This page contains links to:</p>
+  <ul>
+    <li>
+      <a href="#supported"><strong>Supported Drivers</strong></a>
+    </li>
+    <li>
+      <a href="#vti"><strong>VTI Instruments Drivers</strong></a>
+    </li>
+    <li>
+      <a href="#programs"><strong>Programs to Download SCPI Drivers</strong></a>
+    </li>
+  </ul>
+
+  <p>
+    Use your browser's Find feature (Ctrl-F) to quickly locate an
+    instrument's model number below.
+  </p>
+
+  <!-- ################################################## -->
+
+  <h2 id="supported">Supported Drivers</h2>
+  <p>
+    The following drivers are supported by Agilent.
+  </p>
+
+  <dl>
+    <dt>
+      <a href="./files/cenct08.dc"><strong>cenct08.dc</strong> (A.02.02)</a> 
+      <span>|</span>
+      <a href="./files/cenct08.du"><strong>cenct08.du</strong> (A.02.02)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>CENCO CENC_TAC8 8-channel Tachometer C-size VXI card</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <dl>
+    <dt>
+      <a href="./files/irig.dc"><strong>irig.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/irig.du"><strong>irig.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>BANC-350 IRIG B Time Code Processor Card Bundle</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <dl>
+    <dt>
+      <a href="./files/mil1553.dc"><strong>mil1553.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/mil1553.du"><strong>mil1553.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>DDCC-1553 Mil-Std-1553 VXI Card Bundle</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/syn.dc"><strong>syn.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/syn.du"><strong>syn.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>DDCC-37001 Synchro/Resolver VXI Card Bundle</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/mbd.dc"><strong>mbd.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/mbd.du"><strong>mbd.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1312A 6 1/2 Digit Multimeter</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/voltmtr.dc"><strong>voltmtr.dc</strong> (A.08.02)</a> 
+      <span>|</span>
+      <a href="./files/voltmtr.du"><strong>voltmtr.du</strong> (A.08.02)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1326A 5 1/2 Digit Multimeter</li>
+	<li>E1326B 5 1/2 Digit Multimeter</li>
+	<li>E1343A 16-Channel High Voltage Relay Multiplexer</li>
+	<li>E1344A 16-Channel Thermocouple High Voltage Relay Multiplexer</li>
+	<li>E1345A 16-Channel Relay Multiplexer</li>
+	<li>E1346A 48-Channel Single-Ended Relay Multiplexer</li>
+	<li>E1347A 16-Channel Thermocouple Relay Multiplexer</li>
+	<li>E1351A 16-Channel FET Multiplexer</li>
+	<li>E1352A 32-Channel Single-ended FET Multiplexer</li>
+	<li>E1353A 16-Channel Thermocouple FET Multiplexer</li>
+	<li>E1355A 8-Channel 120 Ohm Strain Relay Multiplexer</li>
+	<li>E1356A 8-Channel 350 Ohm Strain Relay Multiplexer</li>
+	<li>E1357A 8-Channel 120 Ohm Strain FET Multiplexer</li>
+	<li>E1358A 8-Channel 350 Ohm Strain FET Multiplexer</li>
+	<li>E1411A 5 1/2 Digit Multimeter</li>
+	<li>E1411B 5 1/2 Digit Multimeter</li>
+	<li>E1460A 64-Channel Relay Multiplexer</li>
+	<li>E1468A 8x8 Relay Matrix Switch</li>
+	<li>E1469A 4x16 Relay Matrix Switch</li>
+	<li>E1476A 64-Channel 3-wire Relay Multiplexer with Thermocouple Compensation</li>
+	<li>E8460A 256-Channel Relay Multiplexer</li>
+	<li>E8462A 256-Channel Relay Multiplexer</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <strong>No file needed.</strong> 
+      SCPI driver A.04.02 is already in ROM of E1300, E1301, E1306, E1405, and E1406 Command Modules
+    </dt>
+    <dd>
+      <ul>
+	<li>E1328A 4-Channel Digital to Analog Converter</li>
+	<li>E1332A 4-Channel Counter/Totalizer</li>
+	<li>E1333A 3-Channel Universal Counter</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e1339.dc"><strong>e1339.dc</strong> (A.04.01)</a> 
+      <span>|</span>
+      <a href="./files/e1339.du"><strong>e1339.du</strong> (A.04.01)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1339A 72-Channel Open Collector Relay Driver</li>
+	<li>Z2309A 72-Channel Digital Output Relay Driver</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/switch.dc"><strong>switch.dc</strong> (A.11.01)</a> 
+      <span>|</span>
+      <a href="./files/switch.du"><strong>switch.du</strong> (A.11.01)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1343A 16-Channel High Voltage Relay Multiplexer</li>
+	<li>E1344A 16-Channel Thermocouple High Voltage Relay Multiplexer</li>
+	<li>E1345A 16-Channel Relay Multiplexer</li>
+	<li>E1346A 48-Ch Single-Ended Relay Multiplexer</li>
+	<li>E1347A 16-Channel Thermocouple Relay Multiplexer</li>
+	<li>E1351A 16-Channel FET Multiplexer</li>
+	<li>E1352A 32-Channel Single-ended FET Multiplexer</li>
+	<li>E1353A 16-Channel Thermocouple FET Multiplexer</li>
+	<li>E1355A 8-Channel 120 Ohm Strain Relay Multiplexer</li>
+	<li>E1356A 8-Channel 350 Ohm Strain Relay Multiplexer</li>
+	<li>E1357A 8-Channel 120 Ohm Strain FET Multiplexer</li>
+	<li>E1358A 8-Channel 350 Ohm Strain FET Multiplexer</li>
+	<li>E1361A 2-Wire 4x4 Relay Matrix</li>
+	<li>E1364A 16-Channel Form C Switch</li>
+	<li>E1366A Dual 1x4 50 Ohm RF Multiplexer</li>
+	<li>E1367A Dual 1x4 75 Ohm RF Multiplexer</li>
+	<li>E1368A 18 GHz Microwave Switch</li>
+	<li>E1369A Microwave Switch Driver</li>
+	<li>E1370A Microwave Switch/Step Attenuator Driver</li>
+	<li>E1442A 64-Channel, Form C or Form A VXI Switch</li>
+	<li>E1460A 64-Channel Relay Multiplexer</li>
+	<li>E1463A 32-Channel, 5 amp, Form C VXI Switch</li>
+	<li>E1465A 16x16 Relay Matrix Switch</li>
+	<li>E1466A 4x64 Relay Matrix Switch</li>
+	<li>E1467A 8x32 Relay Matrix Switch</li>
+	<li>E1468A 8x8 Relay Matrix Switch</li>
+	<li>E1469A 4x16 Relay Matrix Switch</li>
+	<li>E1472A Six 1x4 50 Ohm RF Multiplexer</li>
+	<li>E1473A Six 1x4 50 Ohm RF Multiplexer Expander</li>
+	<li>E1474A Six 1x4 75 Ohm RF Multiplexer</li>
+	<li>E1475A Six 1x4 75 Ohm RF Multiplexer Expander</li>
+	<li>E1476A 64-Channel 3-wire Relay Multiplexer with Thermocouple Compensation</li>
+	<li>E8460A 256-Channel Relay Multiplexer</li>
+	<li>E8462A 256-Channel Relay Multiplexer</li>
+	<li>E8480A 40-Channel High Power GP Switch</li>
+	<li>E8481A 2-Wire 4x32 Matrix Switch</li>
+	<li>E8482A Six 1x4, 50 ohm, 3GHz RF Multiplexer</li>
+	<li>E8483A Microwave Switch/Attenuator Driver</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/z2412a.dc"><strong>z2412a.dc</strong> (A.01.20)</a> 
+      <span>|</span>
+      <a href="./files/z2412a.du"><strong>z2412a.du</strong> (A.01.20)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1361A 2-wire 4x4 Relay Matrix</li>
+	<li>E1364A 16-Channel Form C Switch</li>
+	<li>E1465A 16x16 Relay Matrix Switch</li>
+	<li>E1466A 4x64 Relay Matrix Switch</li>
+	<li>E1467A 8x32 Relay Matrix Switch</li>
+	<li>Z2412A</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e1418.dc"><strong>e1418.dc</strong> (A.01.05)</a> 
+      <span>|</span>
+      <a href="./files/e1418.du"><strong>e1418.du</strong> (A.01.05)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1418A 8/16 Channel Digital to Analog Converter</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e1430.dc"><strong>e1430.dc</strong> (A.03.00)</a> 
+      <span>|</span>
+      <a href="./files/e1430.du"><strong>e1430.du</strong> (A.03.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1430A 1OMS/s, 23bit, A/D with Filter &amp; Memory</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e1431.dc"><strong>e1431.dc</strong> (A.00.04)</a> 
+      <span>|</span>
+      <a href="./files/e1431.du"><strong>e1431.du</strong> (A.00.04)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1431 25.6 kHz 8-Channel VXI Input Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/amplify.dc"><strong>amplify.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/amplify.du"><strong>amplify.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1446A Summing Amplifier/DAC</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/digital.dc"><strong>digital.dc</strong> (A.02.00)</a> 
+      <span>|</span>
+      <a href="./files/digital.du"><strong>digital.du</strong> (A.02.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1450A 160 MHz, 12-Channel Timing Module</li>
+	<li>E1451A 20 MHz Pattern I/O Module, 32 I/O Pins</li>
+	<li>E1452A Terminating 20 MHz Pattern I/O Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e1459.dc"><strong>e1459.dc</strong> (A.01.01)</a> 
+      <span>|</span>
+      <a href="./files/e1459.du"><strong>e1459.du</strong> (A.01.01)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1459A 64-Channel Isolated Digital Input/Interrupt</li>
+	<li>Z2404B 64-Channel Isolated Digital Input/Interrupt</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/rfmux80.dc"><strong>rfmux80.dc</strong> (A.01.01)</a> 
+      <span>|</span>
+      <a href="./files/rfmux80.du"><strong>rfmux80.du</strong> (A.01.01)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1470A 60-Channel 50 Ohm RF Multiplexer</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/tswitch.dc"><strong>tswitch.dc</strong> (A.03.00)</a> 
+      <span>|</span>
+      <a href="./files/tswitch.du"><strong>tswitch.du</strong> (A.03.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1472A Six 1x4 50 Ohm RF Multiplexer</li>
+	<li>E1473A Six 1x4 50 Ohm RF Multiplexer Expander</li>
+	<li>E1474A Six 1x4 75 Ohm RF Multiplexer</li>
+	<li>E1475A Six 1x4 75 Ohm RF Multiplexer Expander</li>
+	<li>E1550A 32-Channel Balanced Daisy Chain Switch</li>
+	<li>E1551A STS-1/DS3 Daisy Chain Switch</li>
+	<li>E1552A STS-1/DS3 Test Access Switch</li>
+	<li>E1554A 8-Channel 75 Ohm Daisy Chain Switch</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/memory.dc"><strong>memory.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/memory.du"><strong>memory.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1488A 2 to 16 Mbyte Instrument Memory Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e1553.dc"><strong>e1553.dc</strong> (A.01.01)</a> 
+      <span>|</span>
+      <a href="./files/e1553.du"><strong>e1553.du</strong> (A.01.01)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1553A Dual STS-1/DS3 Amplifier/LBO</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e2261.dc"><strong>e2261.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/e2261.du"><strong>e2261.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E2261A Quad RS-232 Interface M-Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e2270.dc"><strong>e2270.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/e2270.du"><strong>e2270.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E2270A 16-Channel Form A Switch M-Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e2271.dc"><strong>e2271.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/e2271.du"><strong>e2271.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E2271A 4x4 Matrix Switch M-Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e2272.dc"><strong>e2272.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/e2272.du"><strong>e2272.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E2272A Dual 8-to-1 Relay Multiplexer M-Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e2273.dc"><strong>e2273.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/e2273.du"><strong>e2273.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E2273A 8-Channel Form C Switch M-Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e2274.dc"><strong>e2274.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/e2274.du"><strong>e2274.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E2274A 4-Channel Form C Power Relay M-Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e2290.dc"><strong>e2290.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/e2290.du"><strong>e2290.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E2290A 16-bit Digital I/O M-Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e2291.dc"><strong>e2291.dc</strong> (A.01.00)</a> 
+      <span>|</span>
+      <a href="./files/e2291.du"><strong>e2291.du</strong> (A.01.00)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E2291A 16-Channel Isolated Digital Output M-Module</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/e8460.dc"><strong>e8460.dc</strong> (A.01.05)</a> 
+      <span>|</span>
+      <a href="./files/e8460.du"><strong>e8460.du</strong> (A.01.05)</a>
+    </dt>
+    <dd>
+      <ul>
+	<li>E8460A 256-Channel Relay Multiplexer</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/zswitchb.dc"><strong>zswitchb.dc</strong> for E1300/1/6 (A.02.00)</a> 
+      <span>|</span>
+      <a href="./files/zswitchb.du"><strong>zswitchb.du</strong> for E1300/1/6 (A.02.00)</a> 
+      <br />
+      <a href="./files/zswitchc.dc"><strong>zswitchc.dc</strong> for E1405/6 (A.03.00)</a> 
+      <span>|</span>
+      <a href="./files/zswitchc.du"><strong>zswitchc.du</strong> for E1405/6 (A.03.00)</a> 
+    </dt>
+    <dd>
+      <ul>
+	<li>Z2309A 72-Channel Digital Output Relay Driver</li>
+	<li>Z2403A 64-Channel Switch</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <a href="./files/zswitchc.dc"><strong>zswitchc.dc</strong> for E1405/6 (A.03.00)</a> 
+      <span>|</span>
+      <a href="./files/zswitchc.du"><strong>zswitchc.du</strong> for E1405/6 (A.03.00)</a> 
+    </dt>
+    <dd>
+      <ul>
+	<li>Z2417 32-Channel Switch</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <!-- ################################################## -->
+
+  <h2 id="vti">VTI Instruments Drivers</h2>
+
+  <p>
+    The following drivers are for products no longer supported by
+    Agilent.  You may be able to find the drivers from
+
+    <a href="http://www.vtiinstruments.com/" target="_blank">VTI Instruments</a>, 
+
+    who purchased these product lines from Agilent several years ago.
+  </p>
+
+  <dl>
+    <dt>
+      <strong>alg_ctl.dc</strong> 
+      <span>|</span>
+      <strong>alg_ctl.du</strong>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1415A Algorithmic Closed Loop Controller</li>
+	<li>E1419A Multifunction Measurement Control</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <strong>e1414a.dc</strong> 
+      <span>|</span>
+      <strong>e1414a.du</strong>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1414A Pressure Scanning A/D Converter</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <strong>e1563_4.dc</strong> 
+      <span>|</span>
+      <strong>e1563_4.du</strong>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1563 800 kSa/s, 2-Channel Digitizer</li>
+	<li>E1564 800 kSa/s, 4-Channel Digitizer</li>
+      </ul>
+    </dd>
+  </dl>
+  <dl>
+    <dt>
+      <strong>scan_ad.dc</strong> 
+      <span>|</span>
+      <strong>scan_ad.du</strong>
+    </dt>
+    <dd>
+      <ul>
+	<li>E1313A 32-Channel Scanning A/D Converter</li>
+	<li>E1413B 64-Channel Scanning A/D Converter</li>
+	<li>E1413C 64-Channels Muxed to 16-bit 100KHz A/D Converter</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <!-- ################################################## -->
+
+  <h2 id="programs">Programs to Download SCPI Drivers</h2>
+
+  <h3>VEE Program to Download SCPI Drivers via GPIB</h3>
+  <dl>
+    <dt>
+      <a href="./files/vxidld.vee"><strong>vxidld.vee</strong></a>
+    </dt>
+    <dd>
+      <ul>
+	<li>Removes all of the currently loaded drivers.</li>
+	<li>Destroys all contents in the current RAM Disk (if any).</li>
+	<li>Downloads the drivers that you entered by filename in the box "Files".</li>
+      </ul>
+    </dd>
+  </dl>
+
+  <h3>HP VIC to Download Drivers</h3>
+  <p>
+    The Hewlett-Packard VXI Installation Consultant (HP VIC) is a VXI
+    hardware installation program to help you configure and install
+    VXI instruments and can also download DOS-formatted instrument
+    drivers into VXI Command Modules.
+  </p>
+  <dl>
+    <dt>
+      <a href="./files/vic32setup.exe"><strong>vic32setup.exe</strong></a>: 
+      VIC 3.1 is a 32-bit Windows program for Windows 95 and Windows NT.
+    </dt>
+    <dd>
+      <ol>
+	<li>Create a temporary directory on your PC hard disk, and download the archive file into this temporary directory.</li>
+	<li>
+	  Run that (WinZip) archive file:
+          <ul>
+	    <li>Fill in a destination folder: the A: floppy or an empty hard disk directory.</li>
+            <li>Click the Unzip button to explode the files.</li>
+            <li>Click the Close button.</li>
+	  </ul>
+	</li>
+	<li>Run the new Setup.exe program to continue the installation.</li>
+      </ol>
+    </dd>
+  </dl>
+  <p>
+    Instructions for using HP VIC and its Driver Download capability
+    are contained in the software's online help.
+  </p>
+  <p>
+    Download the .dc and .du SCPI driver files into the DRIVERS
+    directory under the directory where you installed HP VIC. This is
+    where HP VIC will look for SCPI drivers to download to the command
+    module during its configuration process. If it cannot find them
+    there, it will ask you for each driver and expect it to be on a
+    floppy disk.
+  </p>
+  <p>
+    HP VIC supports an <strong>Agilent 24542U serial cable
+    (9F/9F)</strong> between the PC's COM1 port and the Command
+    Module.
+  </p>
+
+  <h3>DOS Program to Download SCPI Drivers via Serial</h3>
+  <dl>
+    <dt>
+      <a href="./files/VXIDLD.EXE"><strong>VXIDLD.EXE</strong></a> works well on DOS 6.22, or a in a DOS window on Windows 3.11, Windows 95, Windows NT 3.51, or Windows NT 4.0.
+    </dt>
+    <dd>
+      <ol>
+        <li>
+	  Attach an Agilent 24542U serial cable (9F/9F) between the
+	  PC's COM1 port and the Command Module.
+	</li>
+        <li>
+	  Copy VXIDLD.EXE, VXIDLD.CFG, and your *.dc files into an
+	  empty directory.
+	</li>
+	<li>
+	  Optional: Edit the VXIDLD.CFG text file to use a different
+	  PC COM port (line 390), or to delete previously downloaded
+	  SCPI drivers (line 504).
+	</li>
+	<li>
+	  Execute the VXIDLD.EXE program and monitor the progress on
+	  the screen. (The 133K byte DIG_IO.DC file takes about 4
+	  minutes to download.) Execute the VXIDLD.EXE program from an
+	  MS-DOS Prompt window so you can see any error messages.
+	</li>
+      </ol>
+    </dd>
+  </dl>
+
+  <h3>HP BASIC Workstation Program to Download SCPI Drivers</h3>
+  <p>
+    On your HP BASIC Workstation (Series 200/300) use the GET command
+    to read the text-based <a href="./files/VXIDLD.GET">VXIDLD.GET</a>
+    program:
+  </p>
+  <p style="margin-left: 2em;">
+    <code>GET "VXIDLD.GET"</code>
+  </p>
+
+  <h3>HP-UX VXI Instrument Configuration and File Download Utilities</h3>
+  <p>
+    Run <code>vxidldux -?</code> for help and examples. 
+  </p>
+  <ul>
+    <li>HP-UX 9: <a href="./files/vxidldux9"><strong>vxidldux9</strong> (1.45)</a></li>
+    <li>HP-UX 10: <a href="./files/vxidldux10"><strong>vxidldux10</strong> (1.46)</a></li>
+  </ul>
+</div>
+
+<div id="footer">
+  <div class="wrapper">
+    <p id="copyright">&copy; Agilent 2000-2013</p>
+  </div>
+</div> 
+<!-- kkh/2013-02-01 -->
+
+</body>
+</html>
+

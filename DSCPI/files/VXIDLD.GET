@@ -1,0 +1,1834 @@
+100  ! HP's VXI Commander Auto-Configuration and Register Device Driver Loading.
+102  ! $Revision: 1.37 $ $Date: 92/08/05 13:01:57 $
+104  ! (c) Copyright 1991,1992, Hewlett-Packard Company, all rights reserved.
+106  !
+108  ! File/device usage.
+110  !I/O interface used for communication with the VXI mainframe is Se_IO_Id
+112  ! aka. @Mainframe
+114  !ASCII files used for batch input of configuration is DefCfgFile$
+116  ! aka. @AsciiFile
+118  !ROM program files used for input of program to be transfered are PF_FName$
+120  ! aka. @BinaryFile
+122  !Driver files used for input of driver to be transfered are DF_FName(*)
+124  ! aka. @BinaryFile
+126  !ASCII file used for logging progress is set with "EXECUTION LOG="
+128  ! aka. @Se_Log
+130  !
+132  ! Setup constants.
+134  COM /ConstantsMisc/ ProgName$[6],SysAddr,EOFError
+136  COM /ConstantsRS232/ AnyString$[1],ResponseEnd$[2]
+138  COM /ConstantsIO/ IO_IdMin,IO_IdMax,IO_BaudMin,IO_BaudMax,IO_SBitsMin,IO_SBitsMax
+140  COM /ConstantsMe/ Me_NRamSizeMin,Me_NRamSizeMax,Me_RDiskSizeMin,Me_RDiskSizeMax
+142  ProgName$="VXIDLD"             !Name of this program
+144  DefCfgFile$="VXIDLD.CFG"       !Name of Default user batch (Configuration) File, in current directory
+146  SysAddr=0                      !Address of SYSTEM or LOADER in VXI mainframe
+148  EOFError=59
+150  AnyString$=CHR$(128)
+152  ResponseEnd$=CHR$(13)&CHR$(10)
+154  !BatchLineLenMax=160
+156  !BatchLabelLenMax=17
+158  !BatchFileLenMax=100
+160  ! More constants.
+162  !SystErrCntMax=10              !Maximum number of errors in pseudo queue
+164  !FileNameLen=50                !Maximum number of characters in file names
+166  !PF_FNameLen=FileNameLen       !Maximum length of ROM program file names
+168  !NameLen=7                     !Maximum number of characters in instr. names
+170  !RevLen=7                      !Maximum number of characters in driver revision
+172  !F_CountMax=80         !Maximum number of files
+174  !Cmd_CountMax=80               !Maximum number of any type on command in .CFG
+176  !DF_CountMax=20                !Maximum number of driver files
+178  !DF_FNameLen=FileNameLen       !Maximum length of driver file names
+180  !DL_CountMax=DF_CountMax       !Maximum number of drivers loaded
+182  !DL_NameLen=NameLen            !Maximum length of loaded driver names
+184  !DL_RevLen=RevLen              !Maximum length of loaded driver revisions
+186  ! Valid ranges for selections.
+188  IO_IdMin=70000.0               !Minimum value of Se_IO_Id
+190  IO_IdMax=313000.0              !Maximum value of Se_IO_Id
+192  IO_BaudMin=300         !Minimum value of Se_IO_Baud
+194  IO_BaudMax=19200               !Maximum value of Se_IO_Baud
+196  IO_SBitsMin=1          !Minimum value of Se_IO_SBits
+198  IO_SBitsMax=2          !Maximum value of Se_IO_SBits
+200  Me_NRamSizeMin=0.0             !Minimum value of Se_Me_NRamSize
+202  Me_NRamSizeMax=2097152 !Maximum value of Se_Me_NRamSize (2 Mbyte now)
+204  Me_RDiskSizeMin=0.0            !Minimum value of Se_Me_RDiskSize
+206  Me_RDiskSizeMax=2097152        !Maximum value of Se_Me_RDiskSize (2 Mbyte now)
+208  !
+210  ! Setup static variables.
+212  COM /ReportTmp/ Se_LogOpen,@Se_Log
+214  Se_LogOpen=0           !FALSE
+216  COM /ReportErrTmp/ StaticErrReport
+218  StaticErrReport=0              !FALSE
+220  ! Setup error flag.
+222  COM /SetErrorOccured/ ErrorOccured,LastError
+224  COM /RS232Err/ SystErrCnt,SystErr$(20)[80]
+226  SystErrCnt=0           !Start with no errors in pseudo error queue
+228  SystErr$(10)="Too many errors" !Always last err in queue !SystErrCntMax
+230  !FileNameLen, BatchFileLenMax, BatchLabelLenMax, & BatchLineLenMax-BatchLabelLenMax-1
+232  COM /BatchTmp/ SavedBatchFile$[50],BatchFileLabel$(100)[17],BatchFileData$(100)[146]
+234  SavedBatchFile$=""             !none in use yet
+236  COM /LoadFile/ BytesSent
+238  !
+240  ! Setup virtual global data structures.
+242  COM /ConfigurationDL/ DL_Count,DL_Name$(20)[7],DL_Rev$(20)[7]
+244  COM /ConfigurationMe/ Me_NRamSize,Me_RDiskSize,Me_DRamSize,Me_DRamCount,Me_FRomSize,Me_FRomCount
+246  COM /ConfigurationId/ SysName$[7],MfRev$[7]
+248  COM /SelectedFiles/ Se_Dir$[50],Se_Log$[50]
+250  COM /SelectedIO/ Se_IO_Type$[6],Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$[3]
+252  COM /SelectedPF/ PF_FName$[50],PF_FSize
+254  COM /SelectedDF/ DF_Count,DF_FName$(20)[50],DF_FSize(20),DF_DSize(20),DF_DJmpRev(20)
+256  COM /SelectedMe/ Se_Me_NRamSize,Se_Me_RDiskSize,Se_Me_DrivSize
+258  !  Configuration       Information on what is out there
+260  !   IO                 Input/Output interfaces
+262  !   DLoaded                    Drivers Loaded into mainframe
+264  !    Count                             how many (0-DL_CountMax)
+266  !    Name$(DL_CountMax)[DL_NameLen]    driver Name
+268  !    Rev$(DL_CountMax)[DL_RevLen]      driver Revision
+270  !   Mem                        VXI Memory configuration
+272  !    NRamSize                  Non-volatile RAM segment total size
+274  !    RDiskSize                 RAM "disk" RAM segment total size
+276  !    DRamSize                  Driver RAM segment total size
+278  !    DRamCount                 how many Driver can be put in RAM
+280  !  SysName$[NameLen]   The Instrument name for the SYSTEM/LOADER
+282  !  MfRev$[RevLen]              Revision of Mainframe being downloaded to
+284  !  Selected                    Information on what the user chooses to use
+286  !   Dir$[FileNameLen]          Directory file names are relative to
+288  !   Log$[FileNameLen]          File to which errors etc are reported
+290  !   IO                         Input/Output interfaces
+292  !    Type$                             what sort of I/O will we be using
+294  !    Id                                which I/O interface to use (ADDRESS)
+296  !    Baud                              baud rate for RS-232
+298  !    SBits                             stop bits for RS-232
+300  !    Hand$                             handshake for RS-232
+302  !   PFile                      ROM Programs in Files
+304  !    FName$[PF_FNameLen]               File Name
+306  !    FSize                             total File Size (of all part combined)
+308  !   DFile                      Drivers in Files
+310  !    Count                             how many (0-DF_CountMax)
+312  !    FName$(DF_CountMax)[DF_FNameLen]  File Name
+314  !    FSize(DF_CountMax)                File Size
+316  !    DSize(DF_CountMax)                Driver Size
+318  !    DJmpRev(DF_CountMax)              Driver's minimum Jump table Revision
+320  !   Mem                        VXI Memory configuration
+322  !    NRamSize                          Non-volatile RAM segment total size
+324  !    RDiskSize                         RAM "disk" RAM segment total size
+326  !    DRamSize                          Driver RAM segment total size
+328  !    DRamCount                         how many Driver can be put in RAM
+330  !
+332  ! Begin program.
+334  CALL ConfigDisp
+336  CALL Report("Beginning VXI ROM Program and Driver Download/Configuration Program")
+338  CALL GetValidIO(DefCfgFile$)   !Get Valid I/O interface and Disk selections
+340  CALL ConfigIO  !Configure I/O interface and Disk as per selections
+342  CALL ExecuteCmds(DefCfgFile$,"BEGINNING COMMAND")
+344  CALL CharVxi           !Characterize VXI system (and files for it)
+346  CALL GetValidVxi(DefCfgFile$)  !Get Valid VXI system (and files for it) selections
+348  CALL ConfigVxi(DefCfgFile$)    !Configure VXI system as per selections
+350  CALL Report("Configuration complete")
+352  CALL StopExecution
+354  END
+356  !
+358  SUB SkipNextLine       !Used as lowest common denominator way to handle errors
+360    ERROR SUBEXIT
+362  SUBEND !SkipNextLine
+364  !
+366  SUB SetErrorOccured    !Used as lowest common denominator way to handle errors
+368  COM /SetErrorOccured/ ErrorOccured,LastError
+370    ErrorOccured=1       !TRUE
+372    LastError=ERRN
+374    ERROR SUBEXIT
+376  SUBEND !SetErrorOccured
+378  !
+380  SUB ConfigDisp         !Configure Display for status messages
+382  !WARNING:  Loging to other than display not yet setup
+384    CLS
+386  SUBEND !ConfigDisp
+388  !
+390  SUB GetValidIO(BatchFileName$) !Get I/O interface & Disk selections
+392    CALL ReportStatus("Reading directory and I/O device requests")
+394    CALL SetIOSel(BatchFileName$)
+396  SUBEND !GetValidIO
+398  !
+400  SUB SetIOSel(BatchFileName$)   !Setup I/O & Disk selections
+402  COM /ConstantsIO/ IO_IdMin,IO_IdMax,IO_BaudMin,IO_BaudMax,IO_SBitsMin,IO_SBitsMax
+404  COM /ConstantsMe/ Me_NRamSizeMin,Me_NRamSizeMax,Me_RDiskSizeMin,Me_RDiskSizeMax
+406  COM /SelectedFiles/ Se_Dir$,Se_Log$
+408  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+410  !WARNING:  Loging to other than display not yet setup
+412    !The default is the current directory so that it will run on non-HFS
+414    Se_Dir$=""   !Default driver file Directory (current directory)
+416    CALL GetBatchStr(BatchFileName$,"DIRECTORY",Se_Dir$)
+418    Se_Log$=""   !Default output log destination is just the screen
+420    !Look for some permanent place to log errors, Se_Dir$ must already be set
+422    CALL GetBatchStr(BatchFileName$,"EXECUTION LOG",Se_Log$)
+424    Se_IO_Type$="HP-IB"  !Set system default
+426    CALL GetBatchStr(BatchFileName$,"INTERFACE",Se_IO_Type$)
+428    IF "HP-IB"=Se_IO_Type$ THEN
+430    ELSE !"RS-232"=Se_IO_Type$
+432    END IF       !Se_IO_Type$ test
+434    SELECT Se_IO_Type$
+436      CASE "HP-IB"
+438          Se_IO_Id=70900.0       !Set default for most systems
+440      CASE "RS-232"
+442        Se_IO_Id=9
+444        IO_IdMin=7               !Minimum value of Se_IO_Id
+446        IO_IdMax=31              !Maximum value of Se_IO_Id
+448        Se_IO_Baud=9600
+450        CALL GetBatchNum(BatchFileName$,"BAUD",Se_IO_Baud,IO_BaudMin,IO_BaudMax)
+452        Se_IO_SBits=1
+454        CALL GetBatchNum(BatchFileName$,"STOP BITS",Se_IO_SBits,IO_SBitsMin,IO_SBitsMax)
+456        Se_IO_Hand$="XON"
+458        CALL GetBatchStr(BatchFileName$,"HANDSHAKE",Se_IO_Hand$)
+460      CASE ELSE
+462        CALL ReportErrStop("Invalid INTERFACE setting '"&Se_IO_Type$&"' read from '"&BatchFileName$&"'")
+464    END SELECT
+466    !Look for ADDRESS value in batch (configuration) file.
+468    CALL GetBatchNum(BatchFileName$,"ADDRESS",Se_IO_Id,IO_IdMin,IO_IdMax)
+470  SUBEND !SetIOSel
+472  !
+474  SUB StoreIOSel(@BatchFile)     !Store I/O & Disk selections
+476  !Dual of SetIOSel(BatchFileName$)
+478  COM /SelectedFiles/ Se_Dir$,Se_Log$
+480  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+482  COM /SetErrorOccured/ ErrorOccured,LastError
+484    ErrorOccured=0       !FALSE
+486    ON ERROR CALL SetErrorOccured
+488    OUTPUT @BatchFile;"100 REM DIRECTORY="&Se_Dir$
+490    OUTPUT @BatchFile;"110 REM EXECUTION LOG="&Se_Log$
+492    OUTPUT @BatchFile;"120 REM INTERFACE="&Se_IO_Type$
+494    OUTPUT @BatchFile;"130 REM ADDRESS="&VAL$(Se_IO_Id)
+496    OUTPUT @BatchFile;"140 REM BAUD="&VAL$(Se_IO_Baud)
+498    OUTPUT @BatchFile;"150 REM STOP BITS="&VAL$(Se_IO_SBits)
+500    OUTPUT @BatchFile;"160 REM HANDSHAKE="&Se_IO_Hand$
+502    OFF ERROR
+504    IF 0<>ErrorOccured THEN CALL ReportErrStop("trouble writing to file")
+506  SUBEND !StoreIOSel
+508  !
+510  SUB ConfigIO           !Configure I/O interface and Disk as per selections
+512  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+514  COM /ConstantsRS232/ AnyString$,ResponseEnd$
+516  COM /ConfigurationId/ SysName$,MfRev$
+518  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+520  COM /SetErrorOccured/ ErrorOccured,LastError
+522    CALL ReportStatus("Establishing connection to VXI mainframe via I/O device")
+524    IF "HP-IB"=Se_IO_Type$ THEN
+526      !No device setup required
+528    ELSE !"RS-232"=Se_IO_Type$
+530      ErrorOccured=0     !FALSE
+532      ON ERROR CALL SetErrorOccured
+534      CONTROL Se_IO_Id,0;1       !Reset card
+536      STATUS Se_IO_Id,0;CardType
+538      IF 128<CardType THEN CardType=CardType-128
+540      SELECT CardType
+542        CASE 52          !Datacom card, 98628 or 98642
+544          SELECT Se_IO_Baud
+546            CASE 9600
+548              CONTROL Se_IO_Id,20;14
+550              CONTROL Se_IO_Id,21;14
+552            CASE ELSE
+554              CALL ReportErrStop("Baud rate of "&VAL$(Se_IO_Baud)&" not supported with this serial card")
+556          END SELECT
+558          CONTROL Se_IO_Id,34;3  !8 bits/char
+560          CONTROL Se_IO_Id,36;0  !parity disabled
+562          IF "XON"=Se_IO_Hand$ THEN
+564            CONTROL Se_IO_Id,22;5
+566          ELSE
+568            !CONTROL Se_IO_Id,22;0
+570            CALL ReportErrStop("Only software handshake (XON/XOFF) supported with this serial card")
+572          END IF
+574          IF 2=Se_IO_Sbits THEN
+576            CONTROL Se_IO_Id,35;2        !2 stop bits
+578          ELSE
+580            CONTROL Se_IO_Id,35;0        !1 stop bit
+582          END IF
+584        CASE 2,66                !Serial card, 98626 or 98644
+586          CONTROL Se_IO_Id,3;Se_IO_Baud
+588          Format=3                       !8 bits/char, parity disabled
+590          IF "XON"=Se_IO_Hand$ THEN
+592            Format=Format+64
+594          ELSE
+596            CALL ReportErrStop("Only software handshake (XON/XOFF) supported with this serial card")
+598          END IF
+600          IF 2=Se_IO_Sbits THEN Format=Format+4
+602          CONTROL Se_IO_Id,4;Format
+604        CASE ELSE
+606          CALL ReportErrStop("Unrecognized serial card at ADDRESS "&VAL$(Se_IO_Id))
+608      END SELECT
+610      IF Se_IO_Baud<>300 AND Se_IO_Baud<>1200 AND Se_IO_Baud<>2400 AND Se_IO_Baud<>4800 AND Se_IO_Baud<>7200 AND Se_IO_Baud<>9600 AND Se_IO_Baud<>19200  THEN 
+612         CALL ReportErrStop("Baud rate of "&VAL$(Se_IO_Baud)&" not supported")
+614      END IF
+616      OFF ERROR 
+618      IF 0<>ErrorOccured THEN CALL IOFailStop
+620    END IF       !Se_IO_Type$ test
+622    IF "HP-IB"=Se_IO_Type$ THEN
+624      ErrorOccured=0     !FALSE
+626      ON ERROR CALL SetErrorOccured
+628      ON TIMEOUT Se_IO_Id DIV 10000,1 CALL IOTimeOutStop
+630      CLEAR Se_IO_Id DIV 10000           !Get us to a known state
+632      OUTPUT Se_IO_Id+SysAddr;""         !Test that we can send cr/lf
+634      OFF ERROR 
+636      IF 0<>ErrorOccured THEN CALL IOFailStop
+638    ELSE !"RS-232"=Se_IO_Type$
+640      DIM Junk$[511]
+642      CALL DumpVxiInput                  !Dump any pending input
+644      ErrorOccured=0     !FALSE
+646      ON ERROR CALL SetErrorOccured
+648      OUTPUT Se_IO_Id;CHR$(4);           !Get us to a known state
+650      CALL GetVxiPattern(AnyString$&"Select an instrument.",Junk$)
+652      OUTPUT Se_IO_Id;CHR$(3);           !Send clear to display system
+654      OUTPUT Se_IO_Id;"stwyse50"&CHR$(13);       !Force instrument labels
+656      OUTPUT Se_IO_Id;"stunknown"                !Get us to a known format
+658      CALL GetVxiPattern(AnyString$&": UNKNOWN"&ResponseEnd$,Junk$)
+660      IF 0<>POS(Junk$,"SYSTEM") THEN
+662        SysName$="SYSTEM"
+664      ELSE
+666        SysName$="LOADER"
+668      END IF
+670      OUTPUT Se_IO_Id;"si "&SysName$             !Get us to a known state in sys
+672      CALL GetVxiPattern("si "&SysName$&ResponseEnd$&SysName$&AnyString$&": busy"&ResponseEnd$,Junk$)
+674      !There may (not if busy) be a "...: "&ResponseEnd$ waiting now
+676      OUTPUT Se_IO_Id;CHR$(3);           !Send clear to SYSTEM/LOADER
+678      OFF ERROR 
+680      IF 0<>ErrorOccured THEN CALL IOTimeOutStop
+682      CALL CkVxiErr(SysAddr,"While trying to connect to "&SysName$&" instrument",1)      !If errs then stop
+684      CALL GetVxiPattern(AnyString$&SysName$&AnyString$&": "&ResponseEnd$,Junk$)
+686      CALL DumpVxiInput                  !Dump other "...:" if were 2
+688    END IF       !Se_IO_Type$ test
+690    !Report errs and continue
+692    CALL CkVxiErr(SysAddr,"The preceding errors existed on the "&SysName$&" instrument when this program was started (may be normal)",0)
+694    CALL SendVxiCk(SysAddr,"*CLS")       !Flush the error queue
+696    CALL SendVxiCk(SysAddr,"*RST")
+698    CALL SendVxiCk(SysAddr,"DIAG:COMM:SER:STOR") !It's working so save it
+700  SUBEND !ConfigIO
+702  !
+704  SUB CharVxi            !Characterize VXI system (and files for it)
+706  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+708  COM /ConfigurationId/ SysName$,MfRev$
+710    CALL ReportStatus("Characterizing current configuration of VXI mainframe")
+712    DIM Id$[160]
+714    CALL GetVxiStringCk(SysAddr,"*IDN?",Id$)
+716    !Figure out what kind of system it is (SysName set before if using RS-232)
+718    Id$=Id$[POS(Id$,"KARD,")+5]  !Get Model string
+720    SysName$=Id$[1,POS(Id$,",0,")-1]     !Get Model string
+722    IF "LOADER"<>SysName$ THEN SysName$="SYSTEM"
+724    MfRev$=Id$[POS(Id$,",0,")+3]                 !Get Revision string
+726    CALL CharVxiMem
+728    IF SysName$="SYSTEM" THEN CALL CharVxiDL    !SUB CharVxiDL cannot get Driver Names in FROM
+730  SUBEND !CharVxi
+732  !
+734  SUB CharVxiMem !Characterize VXI system (and files for it)
+736  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+738  COM /ConfigurationMe/ Me_NRamSize,Me_RDiskSize,Me_DRamSize,Me_DRamCount,Me_FRomSize,Me_FRomCount
+740  COM /ConfigurationId/ SysName$,MfRev$
+742  !
+744  !
+746  CALL GetVxi2NumberCk(SysAddr,"DIAG:DRAM:CRE?",Me_DRamSize,Me_DRamCount)!Total DRAM  size and # of Drivers Allocated
+748  CALL GetVxiNumberCk(SysAddr,"DIAG:NRAM:CRE?",Me_NRamSize)              !Total NRAM  size Allocated
+750  CALL GetVxiNumberCk(SysAddr,"DIAG:RDISK:CRE?",Me_RDiskSize)            !Total RDISK size Allocated
+752  !
+754  IF SysName$="LOADER" THEN
+756    CALL GetVxiNumberCk(SysAddr,"DIAG:FROM:SIZE?",Me_FRomSize)  !Total FROM space not utilized by ROM Program.
+758    CALL GetVxiNumberCk(SysAddr,"DIAG:FROM:CRE?",Me_FRomCount)  !# of Driver slots allocated.
+760  END IF
+762  SUBEND !CharVxiMem
+764  !
+766  SUB CharVxiDL
+768  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+770  COM /ConfigurationDL/ DL_Count,DL_Name$(*),DL_Rev$(*)
+772  !
+774  ! Get the list of drivers and versions that are loaded
+776  ! in the driver ram area.  The format of the returned string is:
+778  !    '<instr_name>,<instr_model>,<revision>,<where>[;<m>,<d>,<r>,<w>]...'
+780  !    or in the older (<A.04.00?) boxes
+782  !    '"<instr_name>",+<version_number>[;"<aaa>,+<nnn>]...'
+784  !
+786    DIM DrvList$[1023]
+788    CALL GetVxiStringCk(SysAddr,"DIAG:DRIV:LIST?",DrvList$)
+790    IF 0=LEN(DrvList$) THEN GOTO BadDrvList
+792    OldFormat=0                         ! FALSE
+794    IF DrvList$[1,1]=CHR$(34) THEN OldFormat=1    ! TRUE when we see "
+796    DL_Count=1
+798    IF ";"<>DrvList$[LEN(DrvList$)] THEN DrvList$=DrvList$&";"
+800    REPEAT
+802      EndField=POS(DrvList$,",")         !find the end of 1st field
+804      IF OldFormat THEN
+806        IF DrvList$[2,2]=CHR$(34) THEN
+808          DL_Name$(DL_Count)=""
+810        ELSE
+812          IF 4>EndField OR 10<EndField THEN GOTO BadDrvList      !DL_NameLen
+814          !DL_RevLen=RevLen      !Maximum length of loaded driver revisions
+816          DL_Name$(DL_Count)=DrvList$[2,EndField-2]      !strip "s
+818        END IF
+820      ELSE  !New format
+822        IF 2>EndField OR 8<EndField THEN GOTO BadDrvList !DL_NameLen
+824        DL_Name$(DL_Count)=DrvList$[1,EndField-1]        !this is driver name
+826        DrvList$=DrvList$[EndField+1]            !skip to start of 2nd field
+828        EndField=POS(DrvList$,",")               !find end of 2nd field
+830      END IF
+832      DrvList$=DrvList$[EndField+1]              !skip to start of next field
+834      IF OldFormat THEN
+836        EndField=POS(DrvList$,";")
+838      ELSE   !New format
+840        EndField=POS(DrvList$,",")
+842      END IF
+844      IF 2>EndField OR 8<EndField THEN GOTO BadDrvList   !DL_RevLen
+846      DL_Rev$(DL_Count)=DrvList$[1,EndField-1]
+848      DL_Count=DL_Count+1
+850      IF OldFormat THEN
+852        IF DL_Name$(DL_Count-1)="" THEN DL_Count=DL_Count-1      !don't use "",+0
+854      ELSE  !New format
+856        IF LEN(DrvList$)<EndField+3 THEN GOTO BadDrvList
+858        IF DrvList$[EndField+1,EndField+3]<>"RAM" THEN DL_Count=DL_Count-1
+860      END IF
+862      EndField=POS(DrvList$,";")
+864      IF 0=EndField THEN GOTO BadDrvList
+866      DrvList$=DrvList$[EndField+1]      !skip to start of next record
+868    UNTIL SIZE(DL_Name$,1)=DL_Count OR 0=LEN(DrvList$)
+870    DL_Count=DL_Count-1
+872    !
+874    IF 0<>LEN(DrvList$) THEN
+876      DL_Count=DL_Count-1     !last one was one too many
+878      CALL ReportErr("Found more than "&VAL$(DL_Count)&" drivers loaded in VXI mainframe (this program can only use the first "&VAL$(DL_Count)&")")
+880    END IF
+882    SUBEXIT
+884    !
+886  BadDrvList:!
+888    DL_Count=DL_Count-1
+890    CALL ReportErr("List of loaded drivers was garbled after "&VAL$(DL_Count)&" drivers, not using '"&DrvList$&"'")
+892  SUBEND !CharVxiDL
+894 !
+896 !
+898  SUB GetValidVxi(BatchFileName$)        !Get Valid VXI system (and files for it) selections
+900    CALL ReportStatus("Reading configuration of VXI mainframe requests")
+902    CALL SetVxiSel(BatchFileName$)    !1.) Search directory for downloadable files & 2.) get user requests from CFG
+904    CALL CkViableVxi                  !Verify no conditions occured to stop program.
+906  SUBEND !GetValidVxi
+908  !
+910  SUB SetVxiSel(BatchFileName$)  !Setup VXI mainframe selections
+912  COM /ConstantsMe/ Me_NRamSizeMin,Me_NRamSizeMax,Me_RDiskSizeMin,Me_RDiskSizeMax
+914  COM /ConfigurationMe/ Me_NRamSize,Me_RDiskSize,Me_DRamSize,Me_DRamCount,Me_FRomSize,Me_FRomCount
+916  COM /SelectedPF/ PF_FName$,PF_FSize
+918  COM /SelectedDF/ DF_Count,DF_FName$(*),DF_FSize(*),DF_DSize(*),DF_DJmpRev(*)
+920  COM /SelectedMe/ Se_Me_NRamSize,Se_Me_RDiskSize,Se_Me_DrivSize
+922    CALL CharVxiFiles                 !Set system defaults for files
+924    CALL GetBatchStr(BatchFileName$,"PROGRAM FILE",PF_FName$)
+926    !Look for list of driver file names (if any found overwrite defaults)
+928    CALL GetBatchStrRep(BatchFileName$,"DRIVER FILE",DF_FName$(*),DF_Count)
+930    IF 0<>DF_Count THEN
+932      Se_Me_NRamSize=Me_NRamSizeMin      !Set system default
+934      Se_Me_RDiskSize=Me_RDiskSizeMin    !Set system default
+936    ELSE   !no change
+938      Se_Me_NRamSize=Me_NRamSize !Set system default
+940      Se_Me_RDiskSize=Me_RDiskSize       !Set system default
+942    END IF
+944    !Look for NRAM and RDISK values in batch (configuration) file.
+946    !NRAM and RDISK requests are ignored in LOADER Mode (see SUB ConfigVxiMem)
+948    CALL GetBatchNum(BatchFileName$,"NRAM",Se_Me_NRamSize,Me_NRamSizeMin,Me_NRamSizeMax)
+950    CALL GetBatchNum(BatchFileName$,"RDISK",Se_Me_RDiskSize,Me_RDiskSizeMin,Me_RDiskSizeMax)
+952  SUBEND !SetVxiSel
+954  !
+956  SUB StoreVxiSel(@BatchFile)    !Store VXI mainframe selections
+958  !Dual of SetVxiSel(BatchFileName$)
+960  COM /SelectedPF/ PF_FName$,PF_FSize
+962  COM /SelectedDF/ DF_Count,DF_FName$(*),DF_FSize(*),DF_DSize(*),DF_DJmpRev(*)
+964  COM /SelectedMe/ Se_Me_NRamSize,Se_Me_RDiskSize,Se_Me_DrivSize
+966  COM /SetErrorOccured/ ErrorOccured,LastError
+968    ErrorOccured=0       !FALSE
+970    ON ERROR CALL SetErrorOccured
+972    IF ""<>PF_FName$ THEN OUTPUT @BatchFile;"210 REM PROGRAM FILE="&PF_FName$
+974    OUTPUT @BatchFile;"220 REM NRAM="&VAL$(Se_Me_NRamSize)
+976    OUTPUT @BatchFile;"230 REM RDISK="&VAL$(Se_Me_RDiskSize)
+978    OFF ERROR
+980    IF 0<>ErrorOccured THEN CALL ReportErrStop("trouble writing to file")
+982    CALL PutBatchStrRep(250,@BatchFile,"DRIVER FILE",DF_FName$(*),DF_Count)
+984  SUBEND !StoreVxiSel
+986  !
+988  SUB CkViableVxi        !Check specified VXI mainframe selections are possible
+990  COM /ConfigurationDL/ DL_Count,DL_Name$(*),DL_Rev$(*)
+992  COM /ConfigurationMe/ Me_NRamSize,Me_RDiskSize,Me_DRamSize,Me_DRamCount,Me_FRomSize,Me_FRomCount
+994  COM /ConfigurationId/ SysName$,MfRev$
+996  COM /SelectedPF/ PF_FName$,PF_FSize
+998  COM /SelectedDF/ DF_Count,DF_FName$(*),DF_FSize(*),DF_DSize(*),DF_DJmpRev(*)
+1000  COM /SelectedMe/ Se_Me_NRamSize,Se_Me_RDiskSize,Se_Me_DrivSize
+1002    NotViable=0  !FALSE until proven otherwise
+1004    CALL GetDFInfo       !Fills in details & make sure files are in proper format
+1006    Se_Me_DrivSize=0
+1008    FOR I=1 TO DF_Count
+1010      Se_Me_DrivSize=Se_Me_DrivSize+DF_DSize(I)   !Calculate total driver(s) size
+1012    NEXT I
+1014    !
+1016    IF "SYSTEM"=SysName$ THEN    
+1018      IF "A.06.00">MfRev$ THEN CALL ReportErr("Driver downloading is not supported on revisions before A.06.00, yours is revision "&MfRev$)
+1020      IF Se_Me_RDiskSize<>Me_RDiskSize AND Me_RDiskSize<>0 THEN
+1022        CALL ReportErr("Memory already allocated for RDISK.  Changing RDISK destroys contents.")
+1024        CALL Report("Send 'DIAG:RDIS:CRE 0;:DIAG:BOOT' if contents not needed.")
+1026        NotViable=1      !TRUE
+1028      END IF
+1030      IF Se_Me_NRamSize<>Me_NRamSize AND (Me_NRamSize<>0 OR Me_RDiskSize<>0) AND 0=NotViable THEN
+1032        CALL ReportErr("Memory already allocated for NRAM or RDISK.  Changing NRAM destroys contents.")
+1034        CALL Report("Send 'DIAG:...:CRE 0;:DIAG:BOOT' if contents not needed.")
+1036        NotViable=1      !TRUE
+1038      END IF
+1040      IF (Se_Me_DrivSize>Me_DRamSize OR DF_Count>Me_DRamCount) AND (Me_NRamSize<>0 OR Me_RDiskSize<>0) AND 0=NotViable THEN
+1042        CALL ReportErr("Memory already allocated for NRAM or RDISK.  Creating DRAM destroys contents.")
+1044        CALL Report("Send 'DIAG:...:CRE 0;:DIAG:BOOT' if contents not needed.")
+1046        NotViable=1      !TRUE
+1048      END IF
+1050      IF 0<>DL_Count AND 0=NotViable THEN !DL_Count holds the # of drivers that reside on the VXI Mainframe in DRAM
+1052        IF 0<>DF_Count THEN
+1054          CALL ReportErr("Driver(s) already loaded. Downloading new driver(s) destroys existing driver(s) in DRAM.")
+1056          CALL Report("Send 'DIAG:DRAM:CRE 0;:DIAG:BOOT' if contents not needed.")
+1058          NotViable=1    !TRUE
+1060        ELSE
+1062          CALL Report("You specified no new drivers to load, the "&VAL$(DL_Count)&" driver(s) already loaded will not be removed")
+1064        END IF
+1066      END IF
+1068    ELSE !"LOADER"=SysName$, RUN/LOAD switch in LOAD mode for 1406 command module.
+1070      !
+1072      IF DF_Count>0 THEN    !test for drivers present.
+1074        IF Me_FRomCount>0 THEN  !Drivers already present.
+1076           CALL ReportErr ("Driver(s) already exist or an area has been created for driver(s) in FROM.")
+1078           CALL Report("Loading Driver(s) destroys existing driver(s).")
+1080           CALL Report("Send 'DIAG:FROM:CRE 0' if contents not needed.")
+1082           NotViable=1  !TRUE
+1084        END IF
+1086      END IF
+1088      !
+1090      CALL GetPFInfo     !Fills in details & makes sure file is in proper format
+1092      IF ""<>PF_FName$ THEN  !test for memory allocations that would be purged by ROM Program downloading
+1094         IF (0<>Me_DRamSize OR 0<>Me_DRamCount OR 0<>Me_NRamSize OR 0<>Me_RDiskSize OR Me_FRomCount<>0) THEN
+1096           CALL ReportErr("Memory currently allocated for DRAM, NRAM, RDISK or FROM.")
+1098           CALL Report("Loading ROM program destroys memory contents.")
+1100           CALL Report("Send 'DIAG:....:CRE 0;:DIAG:BOOT' in RUN Mode for RDISK, NRAM or DRAM content removal.")
+1102           CALL Report("Send 'DIAG:FROM:CRE 0' in LOAD Mode for FLASH ROM driver removal.")
+1104           NotViable=1   !TRUE
+1106         END IF
+1108      END IF
+1110      !
+1112      IF DF_Count=0 AND PF_FName$="" THEN   !If nothing found for downloading
+1114         CALL ReportStop("No Driver(s) or ROM Program found for downloading to FROM.")
+1116      END IF
+1118      !
+1120    END IF
+1122    IF NotViable THEN CALL ReportStop("You may also edit your CFG file command 'BEGINNING COMMAND=' to do this for you.")
+1124  SUBEND !CkViableVxi
+1126  !
+1128  SUB ConfigVxi(BatchFileName$)  !Configure VXI system as per selections
+1130    CALL ReportStatus("Configuring VXI mainframe as requested")
+1132    CALL ConfigVxiProg
+1134    CALL ConfigVxiMem
+1136    CALL ExecuteCmds(BatchFileName$,"SETUP COMMAND")
+1138    CALL CkConfigVxiMem
+1140    CALL ConfigVxiDrv
+1142    CALL ExecuteCmds(BatchFileName$,"CLEANUP COMMAND")
+1144    CALL CkConfigVxiDrv
+1146  SUBEND !ConfigVxi
+1148  !
+1150  SUB ConfigVxiProg      !Configure ROM program as per selection
+1152  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+1154  COM /ConfigurationId/ SysName$,MfRev$
+1156  COM /ConfigurationMe/ Me_NRamSize,Me_RDiskSize,Me_DRamSize,Me_DRamCount,Me_FRomSize,Me_FRomCount
+1158  COM /SelectedFiles/ Se_Dir$,Se_Log$
+1160  COM /SelectedPF/ PF_FName$,PF_FSize
+1162  COM /LoadFile/ BytesSent
+1164    IF ""<>PF_FName$ THEN
+1166      IF "SYSTEM"=SysName$ THEN
+1168        CALL ReportStop("Since the RUN/LOAD switch is set to RUN the ROM program file '"&Se_Dir$&PF_FName$&"' will not be loaded")
+1170      ELSE       !"LOADER"=SysName$
+1172        DIM PartStr$[3]  !temp variable to hold varying part of filename
+1174        DIM PartName$[50]        !PF_FNameLen
+1176        PartNum=1
+1178        CALL LoadFile(Se_Dir$&PF_FName$,PF_FSize,1)
+1180        WHILE BytesSent < PF_FSize
+1182          PartNum=PartNum+1
+1184          IF PartNum>9 THEN CALL ReportErrStop("VXIDLD cannot support more than 9 ROM Program partitions")
+1186          PartStr$=TRIM$(VAL$(PartNum))
+1188          PartName$=Se_Dir$&PF_FName$[1,LEN(PF_FName$)-4]&PartStr$&PF_FName$[LEN(PF_FName$)-2]
+1190          CALL LoadFile(PartName$,PF_FSize,0)
+1192        END WHILE
+1194        CALL ReportStatus("")
+1196        IF BytesSent<>PF_FSize THEN
+1198          CALL ReportErrStop("Sent "&VAL$(BytesSent)&" bytes from "&Se_Dir$&PF_FName$&", but it contains "&VAL$(PF_FSize)&" bytes")
+1200        END IF
+1202        CALL CkVxiErr(SysAddr,"While trying to load '"&Se_Dir$&PF_FName$&"'-'"&PartName$&"' into instrument at address "&VAL$(SysAddr),1) !If errs then stop
+1204        CALL Report("ROM Program download completed.")
+1206        CALL Report("Move the RUN/LOAD switch to RUN position to verify proper RUN Mode operation.")
+1208      END IF
+1210    END IF
+1212  SUBEND !ConfigVxiProg
+1214  !
+1216  SUB ConfigVxiMem       !Configure VXI system Memory as per selections
+1218  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+1220  COM /ConfigurationId/ SysName$,MfRev$
+1222  COM /ConfigurationMe/ Me_NRamSize,Me_RDiskSize,Me_DRamSize,Me_DRamCount,Me_FRomSize,Me_FRomCount
+1224  COM /SelectedDF/ DF_Count,DF_FName$(*),DF_FSize(*),DF_DSize(*),DF_DJmpRev(*)
+1226  COM /SelectedMe/ Se_Me_NRamSize,Se_Me_RDiskSize,Se_Me_DrivSize
+1228  COM /SelectedPF/ PF_FName$,PF_FSize
+1230    IF "SYSTEM"=SysName$ THEN
+1232      IF Se_Me_RDiskSize<>Me_RDiskSize OR Se_Me_NRamSize<>Me_NRamSize OR Se_Me_DrivSize>Me_DRamSize OR DF_Count>Me_DRamCount THEN
+1234        CALL ReportStatus("Configuring VXI mainframe's memory")
+1236        CALL SendVxiCk(SysAddr,"DIAG:RDISK:CRE "&VAL$(Se_Me_RDiskSize))
+1238        IF Se_Me_NRamSize<>Me_NRamSize OR Se_Me_DrivSize>Me_DRamSize OR DF_Count>Me_DRamCount THEN
+1240          CALL SendVxiCk(SysAddr,"DIAG:NRAM:CRE "&VAL$(Se_Me_NRamSize))
+1242          IF Se_Me_DrivSize>Me_DRamSize OR DF_Count>Me_DRamCount THEN
+1244            CALL SendVxiCk(SysAddr,"DIAG:DRAM:CRE "&VAL$(Se_Me_DrivSize)&","&VAL$(DF_Count))
+1246          END IF
+1248        END IF
+1250        CALL RebootVxi
+1252      END IF   
+1254    ELSE !"LOADER"=SysName$
+1256      IF DF_Count>0 THEN   !If there are drivers to download
+1258        IF ""<>PF_FName$ THEN CALL CharVxiMem   !ROM Program was downloaded and we must gain new VXI status.
+1260        !
+1262        IF Me_FRomSize=0 THEN
+1264          CALL ReportErrStop("No Driver memory currently available in FLASH ROM.")
+1266        END IF
+1268        !
+1270        CALL ReportStatus("Configuring VXI mainframe's FROM driver memory.")
+1272        CALL SendVxiCk(SysAddr,"DIAG:FROM:CRE "&VAL$(DF_Count))
+1274      END IF
+1276    END IF
+1278  SUBEND !ConfigVxiMem
+1280  !
+1282  SUB CkConfigVxiMem     !Check VXI system Memory is Configured correctly
+1284  COM /ConfigurationId/ SysName$,MfRev$
+1286  COM /ConfigurationMe/ Me_NRamSize,Me_RDiskSize,Me_DRamSize,Me_DRamCount,Me_FRomSize,Me_FRomCount
+1288  COM /SelectedDF/ DF_Count,DF_FName$(*),DF_FSize(*),DF_DSize(*),DF_DJmpRev(*)
+1290  COM /SelectedMe/ Se_Me_NRamSize,Se_Me_RDiskSize,Se_Me_DrivSize
+1292    IF "SYSTEM"=SysName$ THEN
+1294      CALL CharVxiMem                    !Update state of mainframe
+1296      ! Check that RAM was properly setup
+1298      IF Me_RDiskSize<>Se_Me_RDiskSize THEN CALL ReportErr(VAL$(Me_RDiskSize)&" bytes of RDISK reserved ("&VAL$(Se_Me_RDiskSize)&" requested)")
+1300      IF Me_NRamSize<>Se_Me_NRamSize THEN CALL ReportErr(VAL$(Me_NRamSize)&" bytes of NRAM reserved ("&VAL$(Se_Me_NRamSize)&" requested)")
+1302      IF Me_DRamSize<Se_Me_DrivSize THEN CALL ReportErrStop(VAL$(Me_DRamSize)&" bytes of DRAM reserved ("&VAL$(Se_Me_DrivSize)&" requested) Program stopping.")
+1304    ELSE   !LOADER
+1306      IF DF_Count>0 THEN  !We could only be downloading ROM so skip this check if #Drivers=0.
+1308        CALL CharVxiMem                  !Update state of mainframe if drivers exist.
+1310        IF DF_Count<>Me_FRomCount THEN CALL ReportErrStop("Number of Drivers requested does not match Number of Drivers allocated. Program stopping.")
+1312      END IF
+1314    END IF
+1316  SUBEND !CkConfigVxiMem
+1318  !
+1320  SUB ConfigVxiDrv       !Configure downloaded Drivers as per selections
+1322  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+1324  COM /ConfigurationId/ SysName$,MfRev$
+1326  COM /SelectedFiles/ Se_Dir$,Se_Log$
+1328  COM /SelectedDF/ DF_Count,DF_FName$(*),DF_FSize(*),DF_DSize(*),DF_DJmpRev(*)
+1330  COM /LoadFile/ BytesSent
+1332  COM /SelectedMe/ Se_Me_NRamSize,Se_Me_RDiskSize,Se_Me_DrivSize
+1334    IF DF_Count>0 THEN
+1336      FOR I=1 TO DF_Count
+1338        CALL LoadFile(Se_Dir$&DF_FName$(I),DF_FSize(I),1)
+1340        CALL ReportStatus("")
+1342        IF BytesSent<>DF_FSize(I) THEN
+1344          CALL ReportErrStop("Sent "&VAL$(BytesSent)&" bytes from "&Se_Dir$&DF_FName$(I)&", but it contains "&VAL$(DF_FSize(I))&" bytes")
+1346        END IF
+1348        CALL CkVxiErr(SysAddr,"While trying to load '"&Se_Dir$&DF_FName$(I)&"' into instrument at address "&VAL$(SysAddr),1)     !If errs then stop
+1350      NEXT I
+1352      !
+1354      IF "SYSTEM"=Sysname$ THEN
+1356        CALL RebootVxi
+1358      ELSE !LOADER
+1360        CALL SendVxiCk(SysAddr,"DIAG:DRIV:INST")
+1362      END IF
+1364      !
+1366      CALL Report("Driver downloading completed.")
+1368      !
+1370    END IF
+1372  SUBEND !ConfigVxiDrv
+1374  !
+1376  SUB CkConfigVxiDrv     !Check downloaded Drivers are Configured correctly
+1378  COM /ConfigurationDL/ DL_Count,DL_Name$(*),DL_Rev$(*)
+1380  COM /ConfigurationId/ SysName$,MfRev$
+1382  COM /ConfigurationMe/ Me_NRamSize,Me_RDiskSize,Me_DRamSize,Me_DRamCount,Me_FRomSize,Me_FRomCount
+1384  COM /SelectedDF/ DF_Count,DF_FName$(*),DF_FSize(*),DF_DSize(*),DF_DJmpRev(*)
+1386  COM /SelectedPF/ PF_FName$,PF_FSize
+1388  COM /SelectedMe/ Se_Me_NRamSize,Se_Me_RDiskSize,Se_Me_DrivSize
+1390    IF "SYSTEM"=SysName$ THEN
+1392      IF DF_Count > 0 THEN  !Have Driver(s) downloaded
+1394        CALL ReportStatus("Checking driver configuring in VXI mainframe")
+1396        DIM Name$[50]    !FileNameLen
+1398        CALL CharVxiDL
+1400        IF DF_Count>DL_Count THEN
+1402          CALL ReportErr("Wrong number of drivers loaded (Expected "&VAL$(DF_Count)&", Found "&VAL$(DL_Count)&")")
+1404        ELSE
+1406          ! Check the actual loaded drivers to make sure it is the
+1408          ! same as the one we have requested.
+1410          ! I am assuming that driver names are the same as file names.
+1412          FOR DF_Idx=1 TO DF_Count
+1414            Name$=DF_FName$(DF_Idx)
+1416            WHILE 0<>POS(Name$,"/")
+1418              Name$=Name$[POS(Name$,"/")+1]
+1420            END WHILE
+1422            WHILE 0<>POS(Name$,"\")
+1424              Name$=Name$[POS(Name$,"\")+1]
+1426            END WHILE
+1428            IF 0<>POS(Name$,".DC") THEN Name$=Name$[1,POS(Name$,".DC")-1]!Search for RS232 DOS type Drivers
+1430            IF 0<>POS(Name$,"_DC") THEN Name$=Name$[1,POS(Name$,"_DC")-1]!Possible convention from Configuration file
+1432            IF 0<>POS(Name$,"_DU") THEN Name$=Name$[1,POS(Name$,"_DU")-1]!Search for HPIB Drivers w/LIF Directory
+1434            IF 0<>POS(Name$,".DU") THEN Name$=Name$[1,POS(Name$,".DU")-1]!Possible convention from Configuration file
+1436            FoundMatch=0 !FALSE
+1438            DL_Idx=0
+1440            REPEAT
+1442              DL_Idx=DL_Idx+1
+1444              IF Name$=DL_Name$(DL_Idx) THEN FoundMatch=1
+1446            UNTIL DL_Count=DL_Idx OR FoundMatch
+1448            IF 0<>FoundMatch THEN
+1450              CALL Report("Driver '"&Name$&"' now appears in list of loaded drivers")
+1452            ELSE
+1454              CALL ReportErr("Driver '"&Name$&"' in file '"&DF_FName$(DF_Idx)&"' does not appear in the list of loaded drivers")
+1456            END IF
+1458          NEXT DF_Idx
+1460        END IF
+1462      ELSE   !No Drivers found.
+1464        CALL Report("No Driver found for downloading to DRAM.")
+1466      END IF
+1468    ELSE  !LOADER
+1470      IF DF_Count > 0 THEN  !Have Driver(s)
+1472        CALL Report("Execute DIAG:DRIV:LIST? in RUN Mode to verify Driver(s) are downloaded to FLASH.")
+1474      END IF
+1476    END IF 
+1478  SUBEND !CkConfigVxiDrv
+1480  !
+1482  SUB GetBatchNum(BatchFileName$,Label$,Result,MinVal,MaxVal)
+1484  COM /SetErrorOccured/ ErrorOccured,LastError
+1486    DIM TmpString$[160]  !BatchLineLenMax
+1488    TmpString$=FNGetBatch$(BatchFileName$,Label$)
+1490    IF ""<>TmpString$ THEN
+1492      CALL Report("Found "&BatchFileName$&" File Request: "&Label$&"="&TmpString$)
+1494      ErrorOccured=0     !FALSE
+1496      ON ERROR CALL SetErrorOccured
+1498      TmpVal=VAL(TmpString$)
+1500      OFF ERROR 
+1502      IF 0<>ErrorOccured THEN
+1504        CALL ReportErr(BatchFileName$&" contains a value for '"&Label$&"' which should be numeric, '"&TmpString$&"' will not be used")
+1506      ELSE
+1508        IF MinVal>TmpVal OR MaxVal<TmpVal THEN
+1510          CALL ReportErr("'"&Label$&"' must be between "&VAL$(MinVal)&" and "&VAL$(MaxVal)&", '"&TmpString$&"' is not (using "&VAL$(Result)&" instead)")
+1512        ELSE
+1514          IF TmpVal<>INT(TmpVal) THEN
+1516            TmpVal=INT(TmpVal)
+1518            CALL ReportErr("'"&Label$&"' must be an integer, '"&TmpString$&"' is not (using "&VAL$(TmpVal)&" instead)")
+1520          ELSE  !no errors observed
+1522            Result=TmpVal
+1524          END IF
+1526        END IF
+1528      END IF
+1530    END IF
+1532  SUBEND !GetBatchNum
+1534  !
+1536  SUB GetBatchStr(BatchFileName$,Label$,Result$)
+1538  COM /SetErrorOccured/ ErrorOccured,LastError
+1540    DIM TmpString$[160]  !BatchLineLenMax
+1542    TmpString$=FNGetBatch$(BatchFileName$,Label$)
+1544    IF ""<>TmpString$ THEN
+1546      CALL Report("Found "&BatchFileName$&" File Request: "&Label$&"="&TmpString$)
+1548      ErrorOccured=0     !FALSE
+1550      ON ERROR CALL SetErrorOccured
+1552      Result$=TmpString$
+1554      OFF ERROR 
+1556      IF 0<>ErrorOccured THEN
+1558        CALL ReportErr(BatchFileName$&" contains a value for '"&Label$&"' which is too long, '"&TmpString$&"' will not be used")
+1560      END IF
+1562    END IF
+1564  SUBEND !GetBatchStr
+1566  !
+1568  SUB GetBatchStrRep(BatchFileName$,Label$,Result$(*),Count)
+1570  COM /SetErrorOccured/ ErrorOccured,LastError
+1572    DIM TmpString$[160]  !BatchLineLenMax
+1574    CurIdx=0
+1576    FoundCount=0         !Can't change Count unless we find one
+1578    REPEAT
+1580      TmpString$=FNGetBatchRep$(BatchFileName$,Label$,CurIdx)
+1582      IF ""<>TmpString$ THEN
+1584        CALL Report("Found "&BatchFileName$&" File Request: "&Label$&"="&TmpString$)
+1586        ErrorOccured=0   !FALSE
+1588        ON ERROR CALL SetErrorOccured
+1590        Result$(FoundCount+1)=TmpString$
+1592        OFF ERROR 
+1594        IF 0<>ErrorOccured THEN
+1596          CALL ReportErr(BatchFileName$&" contains a value for '"&Label$&"' which is too long '"&TmpString$&"' will not be used")
+1598        ELSE
+1600          FoundCount=FoundCount+1
+1602          Count=FoundCount
+1604        END IF
+1606      END IF
+1608    UNTIL ""=TmpString$ OR SIZE(Result$,1)-1=FoundCount
+1610    IF ""<>TmpString$ THEN
+1612      Count=FoundCount-1
+1614      CALL ReportErr("Found more than "&VAL$(Count)&" values for '"&Label$&"' in '"&BatchFileName$&"' (this program can not use the later ones)")
+1616    END IF
+1618  SUBEND !GetBatchStrRep
+1620  !
+1622  SUB PutBatchStrRep(StartNum,@BatchFile,Label$,Result$(*),Count)
+1624  COM /SetErrorOccured/ ErrorOccured,LastError
+1626    ErrorOccured=0       !FALSE
+1628    ON ERROR CALL SetErrorOccured
+1630    FOR Idx=1 TO Count
+1632      OUTPUT @BatchFile;VAL$(StartNum+Idx)&" REM "&Label$&"="&Result$(Idx)
+1634    NEXT Idx
+1636    OFF ERROR
+1638    IF 0<>ErrorOccured THEN CALL ReportErrStop("trouble writing to file")
+1640  SUBEND !PutBatchStrRep
+1642  !
+1644  DEF FNGetBatch$(BatchFileName$,Label$) !Find Label$ in batch file, return value.
+1646    RETURN FNGetBatchRep$(BatchFileName$,Label$,0)
+1648  FNEND !FNGetBatch$
+1650  !
+1652  DEF FNGetBatchRep$(BatchFileName$,Label$,Idx)
+1654  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+1656  COM /SetErrorOccured/ ErrorOccured,LastError
+1658  COM /BatchTmp/ SavedBatchFile$,BatchFileLabel$(*),BatchFileData$(*)
+1660  ! Looks in batch (configuration) file for first occurrence of Label$,
+1662  ! (starting at Idx significant lines from the start of the file)
+1664  ! returns the value (the rest of the line) stored with it.
+1666  ! Value of Label$ passed in must be all upper case.
+1668    DIM LineBuf$[160]    !BatchLineLenMax
+1670    IF ""<>BatchFileName$ THEN
+1672      IF SavedBatchFile$<>BatchFileName$ THEN
+1674        ErrorOccured=0   !FALSE
+1676        ON ERROR CALL SetErrorOccured
+1678        WAIT 1           !In case you have a slow disk
+1680        ASSIGN @AsciiFile TO BatchFileName$;FORMAT ON
+1682        OFF ERROR
+1684        IF 0<>ErrorOccured THEN                  !Try again with "_"
+1686          IF 0<>POS(BatchFileName$,".") THEN BatchFileName$[POS(BatchFileName$,"."),POS(BatchFileName$,".")]="_"
+1688          ErrorOccured=0 !FALSE
+1690          ON ERROR CALL SetErrorOccured
+1692          WAIT 1         !In case you have a slow disk
+1694          ASSIGN @AsciiFile TO BatchFileName$;FORMAT ON
+1696          OFF ERROR
+1698        END IF
+1700        IF 0=ErrorOccured THEN                   !File opened okay
+1702          CALL ReportStatus("Reading '"&BatchFileName$&"' file")
+1704          SavedBatchFile$=BatchFileName$
+1706          BatchIdx=0
+1708          LineNum=0
+1710          REPEAT
+1712            LineNum=LineNum+1
+1714            ON ERROR CALL SetErrorOccured
+1716            ENTER @AsciiFile;LineBuf$
+1718            OFF ERROR
+1720            LabelPos=POS(LineBuf$,"REM")
+1722            IF LabelPos<>0 THEN LabelPos=LabelPos+3
+1724            LineBuf$=TRIM$(LineBuf$[LabelPos+1])
+1726            IF 0=ErrorOccured AND 1<>POS(LineBuf$,"#") AND 0<>POS(LineBuf$,"=") THEN
+1728              BatchFileLabel$(BatchIdx)=UPC$(TRIM$(LineBuf$[1,POS(LineBuf$,"=")-1]))
+1730              BatchFileData$(BatchIdx)=TRIM$(LineBuf$[POS(LineBuf$,"=")+1])
+1732              BatchIdx=BatchIdx+1
+1734            END IF
+1736          UNTIL ErrorOccured OR SIZE(BatchFileLabel$,1)-1=BatchIdx       !EOF OR out of room
+1738          ASSIGN @AsciiFile TO *
+1740          BatchFileLabel$(BatchIdx)=""
+1742          BatchFileData$(BatchIdx)=""
+1744          IF ErrorOccured THEN
+1746            IF LastError<>EOFError THEN CALL ReportErrStop("BASIC error "&VAL$(LastError)&" while reading '"&BatchFileName$&"' file, line "&VAL$(LineNum))
+1748            !ELSE error was due to EOF
+1750          ELSE                           !Found desired label
+1752            BatchIdx=BatchIdx-1
+1754            CALL ReportErr("Found more than "&VAL$(BatchIdx)&" significant lines in '"&BatchFileName$&"' (this program can not use the later ones)")
+1756            CALL Report("Last line used is:  REM "&BatchFileLabel$(BatchIdx)&"="&BatchFileData$(BatchIdx))
+1758          END IF !Label not found in file
+1760        ELSE             !File did not open
+1762          CALL ReportErr("Unable to open file '"&BatchFileName$&"' (file will not be used)")
+1764          BatchFileName$=""      !Clear file name so we won't try to use it again
+1766        END IF
+1768      END IF
+1770      Idx=Idx-1
+1772      REPEAT
+1774        Idx=Idx+1
+1776      UNTIL BatchFileLabel$(Idx)=Label$ OR BatchFileLabel$(Idx)=""
+1778      Idx=Idx+1
+1780      RETURN BatchFileData$(Idx-1)                       
+1782    END IF               !Empty file name (probably previously detected as bad)
+1784    RETURN ""                            
+1786  FNEND !FNGetBatchRep$
+1788  !
+1790  SUB IOTimeOutStop
+1792    CALL ReportErrStop("Timeout while attempting to access VXI mainframe")
+1794  SUBEND !IOTimeOutStop
+1796  !
+1798  SUB IOFailStop
+1800  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+1802    CALL ReportErr("Unable to communicate with the VXI mainframe via the "&Se_IO_Type$&" connection at address "&VAL$(Se_IO_Id))
+1804    CALL Report("Check that the proper cable is connected from the port at that address to the VXI mainframe")
+1806    IF "HP-IB"=Se_IO_Type$ THEN
+1808      CALL Report("Response to 'SYST:COMM:GPIB:ADDR?' should be "&VAL$(INT(Se_IO_Id/100) MOD 100))
+1810      CALL Report("You may want to try sending 'CLEAR "&VAL$(Se_IO_Id)&"' to check out the communications path")
+1812      CALL StopExecution
+1814    ELSE !"RS-232"=Se_IO_Type$
+1816      CALL Report("Response to 'SYST:COMM:SER:BAUD?' should be "&VAL$(Se_IO_Baud))
+1818      CALL Report("Response to 'SYST:COMM:SER:BITS?' should be 8")
+1820      CALL Report("Response to 'SYST:COMM:SER:PAR?' should be NONE")
+1822      CALL Report("Response to 'SYST:COMM:SER:SBIT?' should be "&VAL$(Se_IO_SBits))
+1824      SELECT Se_IO_Hand$
+1826        CASE "XON"
+1828          CALL Report("Response to 'SYST:COMM:SER:PACE?' should be XON")
+1830          CALL Report("Response to 'SYST:COMM:SER:CONT:DTR?' should be ON")
+1832          CALL Report("Response to 'SYST:COMM:SER:CONT:RTS?' should be ON")
+1834        CASE "DTR"
+1836          CALL Report("Response to 'SYST:COMM:SER:PACE?' should be NONE")
+1838          CALL Report("Response to 'SYST:COMM:SER:CONT:DTR?' should be IBF")
+1840          CALL Report("Response to 'SYST:COMM:SER:CONT:RTS?' should be ON")
+1842        CASE "RTS"
+1844          CALL Report("Response to 'SYST:COMM:SER:PACE?' should be NONE")
+1846          CALL Report("Response to 'SYST:COMM:SER:CONT:DTR?' should be ON")
+1848          CALL Report("Response to 'SYST:COMM:SER:CONT:RTS?' should be IBF")
+1850      END SELECT
+1852      CALL Report("If you need to change any of these settings you will also want to execute 'DIAG:COMM:SER:STOR'")
+1854      CALL ReportStop("You may want to try using a communications program (terminal emulator) setup as shown to check out the communications path")
+1856    END IF       !Se_IO_Type$ test
+1858  SUBEND !IOFailStop
+1860  !
+1862  SUB ReportErrStop(ErrMsg$)
+1864    CALL ReportErr(ErrMsg$)
+1866    CALL ReportStatus("Program stopping because of error")
+1868    CALL StopExecution
+1870  SUBEND !ReportErrStop
+1872  !
+1874  SUB ReportErr(ErrMsg$)
+1876  COM /ReportErrTmp/ StaticErrReport
+1878    StaticErrReport=1            !TRUE
+1880    BEEP
+1882    CALL Report("ERROR:  "&ErrMsg$)
+1884  SUBEND !ReportErr
+1886  !
+1888  SUB ReportStop(Msg$)
+1890    CALL Report(Msg$)
+1892    CALL ReportStatus("Program stopping because of error")
+1894    CALL StopExecution
+1896  SUBEND !ReportStop
+1898  !
+1900  SUB Report(Msg$)
+1902  COM /ConstantsRS232/ AnyString$,ResponseEnd$
+1904  COM /SelectedFiles/ Se_Dir$,Se_Log$
+1906  COM /SetErrorOccured/ ErrorOccured,LastError
+1908  COM /ReportTmp/ Se_LogOpen,@Se_Log
+1910    DIM FileName$[50]    !FileNameLen
+1912    DIM NextLine$[80]
+1914    DIM Format$(2)[80]
+1916    IF ""<>Se_Log$ AND 0=Se_LogOpen THEN !Open up log if needed
+1918      ON ERROR CALL SkipNextLine
+1920      IF Se_Dir$<>"" THEN !find out type of Directory
+1922        CAT Se_Dir$ TO Format$(*) !grab 1st & 2nd line of CAT from user specified directory
+1924      ELSE
+1926        CAT TO Format$(*)         !grab 1st & 2nd line of CAT from local directory
+1928      END IF
+1930      ! IBASIC return line, don't delete. IBASIC returns to line before off error.
+1932      OFF ERROR
+1934      IF POS(Format$(2),"LIF") THEN   !"FORMAT: LIF" can also be HFS or SDF
+1936        ON ERROR CALL SkipNextLine
+1938        CREATE Se_Dir$&Se_Log$,3840      ! Create File.  file sizes are not extensible in LIF directories.
+1940        ! IBASIC return line, don't delete. IBASIC returns to line before off error.
+1942        OFF ERROR
+1944        ON ERROR CALL SkipNextLine
+1946        ASSIGN @Se_Log TO Se_Dir$&Se_Log$;FORMAT ON
+1948        FOR I=1 to 46   !46*82+68=3840 must clear out file or previous data will exist.
+1950          OUTPUT @Se_Log; RPT$(" ",80)
+1952        NEXT I
+1954        OUTPUT @Se_Log; RPT$(" ",66)
+1956        ASSIGN @Se_Log TO *    !Close file to restart pointer
+1958        ! IBASIC return line, don't delete. IBASIC returns to line before off error.
+1960        OFF ERROR
+1962      ELSE
+1964        ON ERROR CALL SkipNextLine
+1966        CREATE Se_Dir$&Se_Log$,1 ! Create file if not one already, file is extensible
+1968        ! IBASIC return line, don't delete. IBASIC returns to line before off error.
+1970        OFF ERROR
+1972      END IF
+1974      ErrorOccured=0     !FALSE
+1976      ON ERROR CALL SetErrorOccured
+1978      WAIT 1             !In case you have a slow disk
+1980      ASSIGN @Se_Log TO Se_Dir$&Se_Log$;FORMAT ON
+1982      ! IBASIC return line, don't delete. IBASIC returns to line before off error.
+1984      OFF ERROR
+1986      IF 0<>ErrorOccured THEN    !File did not open
+1988        FileName$=Se_Log$
+1990        Se_Log$=""       !Clear file name so we won't try to use it again
+1992        CALL ReportErr("Unable to open log file '"&Se_Dir$&FileName$&"' (file will not be used)")
+1994      ELSE
+1996        Se_LogOpen=1     !TRUE
+1998      END IF
+2000    END IF
+2002    REPEAT
+2004      IF 80>=LEN(Msg$) THEN
+2006        NextLine$=Msg$
+2008        Msg$=""
+2010      ELSE
+2012        PosBreak=POS(Msg$,ResponseEnd$)
+2014        IF 1<PosBreak AND 80>PosBreak THEN
+2016          NextLine$=Msg$[1,PosBreak-1]
+2018          Msg$="  "&Msg$[PosBreak+LEN(ResponseEnd$)]
+2020        ELSE
+2022          PosNextBreak=1
+2024          REPEAT
+2026            PosBreak=PosNextBreak
+2028            PosNextBreak=PosNextBreak+POS(Msg$[PosBreak+1]," ")
+2030          UNTIL PosBreak=PosNextBreak OR 80<PosNextBreak
+2032          IF LEN("  ")>=PosBreak THEN PosBreak=80
+2034          NextLine$=Msg$[1,PosBreak-1]
+2036          Msg$="  "&Msg$[PosBreak+1]
+2038        END IF
+2040      END IF
+2042      PRINT NextLine$
+2044      IF ""<>Se_Log$ THEN
+2046        ErrorOccured=0   !FALSE
+2048        ON ERROR CALL SetErrorOccured
+2050        OUTPUT @Se_Log;NextLine$
+2052        OFF ERROR
+2054        IF 0<>ErrorOccured THEN
+2056          FileName$=Se_Log$
+2058          Se_Log$=""     !Clear file name so we won't try to use it again
+2060          CALL ReportErr("Unable to write to log file '"&Se_Dir$&FileName$&"' (file will not be used)")
+2062        END IF
+2064      END IF
+2066    UNTIL ""=Msg$
+2068  SUBEND !Report
+2070  !
+2072  SUB ReportStatus(StatusMsg$)
+2074  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+2076    IF ""<>StatusMsg$ THEN
+2078      DISP ProgName$&":  "&StatusMsg$
+2080    ELSE                         !Clearing status
+2082      DISP
+2084    END IF
+2086  SUBEND !ReportStatus
+2088  !
+2090  SUB StopExecution
+2092  COM /SelectedFiles/ Se_Dir$,Se_Log$
+2094    CALL ReportStatus("Program stopping")
+2096    CALL CleanUp
+2098    CALL ReportStatus("")
+2100    IF ""<>Se_Log$ THEN  !If all important messages logged to file
+2102      QUIT                       !Leave RMB-UX if that is what you were using
+2104    END IF
+2106    STOP
+2108  SUBEND !StopExecution
+2110  !
+2112  SUB RebootVxi
+2114  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+2116  COM /ConstantsRS232/ AnyString$,ResponseEnd$
+2118  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2120    CALL ReportStatus("Re-booting VXI mainframe")
+2122    CALL SendVxi(SysAddr,"DIAG:BOOT")
+2124    WAIT 2                               !Make sure re-boot has a chance to start
+2126    IF "HP-IB"=Se_IO_Type$ THEN
+2128      TimeLimit=TIMEDATE+120             !Allow 120 seconds for wake-up
+2130  ListenLoop:!Wait for response to know when instrument is awake
+2132      WHILE TIMEDATE<TimeLimit
+2134        ON TIMEOUT Se_IO_Id DIV 10000,1 GOTO ListenLoop
+2136        Junk=SPOLL(Se_IO_Id+SysAddr)     !Will get past this only if awake
+2138        ON TIMEOUT Se_IO_Id DIV 10000,1 CALL IOTimeOutStop
+2140        CALL FinishReboot
+2142        SUBEXIT
+2144      END WHILE
+2146      CALL ReportErrStop("Re-boot of VXI mainframe failed")
+2148    ELSE !"RS-232"=Se_IO_Type$
+2150      CALL DumpVxiInput   !clear out buffer
+2152      CALL FinishReboot
+2154    END IF       !Se_IO_Type$ test
+2156  SUBEND !RebootVxi
+2158  !
+2160  SUB FinishReboot
+2162  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+2164  COM /ConstantsRS232/ AnyString$,ResponseEnd$
+2166  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2168  COM /SetErrorOccured/ ErrorOccured,LastError
+2170    IF "HP-IB"=Se_IO_Type$ THEN
+2172      ON TIMEOUT Se_IO_Id DIV 10000,1 CALL IOTimeOutStop
+2174      CLEAR Se_IO_Id DIV 10000                   !Get us to a known state
+2176      CALL CkVxiErr(SysAddr,"The preceding error(s) were caused by the boot (may be normal)",0)  !Report errs and continue
+2178      CALL SendVxiCk(SysAddr,"*CLS")     !Flush the error queue
+2180      CALL SendVxiCk(SysAddr,"*RST")
+2182    ELSE !"RS-232"=Se_IO_Type$
+2184      DIM Junk$[255]
+2186      ErrorOccured=0     !FALSE
+2188      ON ERROR CALL SetErrorOccured
+2190      OUTPUT Se_IO_Id;CHR$(4)&"st unknown"               !Just in case
+2192      OFF ERROR 
+2194      IF 0<>ErrorOccured THEN CALL IOTimeOutStop
+2196      CALL GetVxiPattern(AnyString$&": UNKNOWN"&ResponseEnd$,Junk$)
+2198      CALL CkVxiErr(SysAddr,"The preceding error(s) were caused by the boot (may be normal)",0)  !Report errs and continue
+2200      CALL SendVxiCk(SysAddr,"*CLS")     !Flush the error queue
+2202      CALL SendVxiCk(SysAddr,"*RST")
+2204    END IF       !Se_IO_Type$ test
+2206  SUBEND !FinishReboot
+2208  !
+2210  SUB SendVxiCk(Address,Command$)
+2212  ! This sends a command (no results expected) to the VXI mainframe,
+2214  ! then checks to see if an error resulted and if so halts execution
+2216    CALL SendVxi(Address,Command$)
+2218    CALL CkVxiErr(Address,"While sending command '"&Command$&"' to "&VAL$(Address),1)    !If errs then stop
+2220  SUBEND !SendVxiCk
+2222  !
+2224  SUB SendVxi(Address,Command$)
+2226  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+2228  COM /ConstantsRS232/ AnyString$,ResponseEnd$
+2230  COM /ConfigurationId/ SysName$,MfRev$
+2232  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2234  COM /RS232Err/ SystErrCnt,SystErr$(*)
+2236  COM /SetErrorOccured/ ErrorOccured,LastError
+2238  ! This sends a command (no results expected) to the VXI mainframe.
+2240    IF "HP-IB"=Se_IO_Type$ THEN
+2242      IF 10000>Address THEN
+2244        FullAddress=Se_IO_Id+Address
+2246      ELSE
+2248        FullAddress=Address
+2250      END IF
+2252      ON TIMEOUT FullAddress DIV 10000,10 CALL IOTimeOutStop
+2254      OUTPUT FullAddress;Command$
+2256    ELSE !"RS-232"=Se_IO_Type$
+2258      DIM Junk$[255]
+2260      ErrorOccured=0     !FALSE
+2262      ON ERROR CALL SetErrorOccured
+2264      IF Address=SysAddr THEN
+2266        OUTPUT Se_IO_Id;CHR$(4)&"si ";SysName$ !may not be LADD 0 in E1405
+2268        CALL GetVxiPattern(AnyString$&"Select an instrument."&AnyString$&SysName$&"_"&AnyString$&": "&ResponseEnd$,Junk$)
+2270      ELSE
+2272        OUTPUT Se_IO_Id;CHR$(4)&"sa ";Address
+2274        CALL GetVxiPattern(AnyString$&"Select an instrument."&AnyString$&"_"&TRIM$(VAL$(Address))&": "&ResponseEnd$,Junk$)
+2276      END IF
+2278      OUTPUT Se_IO_Id;Command$
+2280      OFF ERROR 
+2282      IF 0<>ErrorOccured THEN CALL IOTimeOutStop
+2284      IF POS(Command$,"DIAG:BOOT") THEN
+2286          CALL DumpVxiInput  !clear out buffer
+2288      ELSE
+2290        SELECT Command$
+2292          CASE CHR$(3)           !Clear command isn't echoed as such
+2294            CALL GetVxiPattern(AnyString$&": "&ResponseEnd$,Junk$)
+2296          CASE "*CLS"
+2298            SystErrCnt=0 !Clear out pseudo error queue
+2300            CALL GetVxiPattern(Command$&ResponseEnd$,Junk$)
+2302          CASE ELSE
+2304            CALL GetVxiPattern(Command$&ResponseEnd$,Junk$)
+2306        END SELECT
+2308      END IF
+2310    END IF       !Se_IO_Type$ test
+2312  SUBEND !SendVxi
+2314  !
+2316  SUB CkVxiErr(Address,ErrMsg$,StopFlag)
+2318  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2320  COM /RS232Err/ SystErrCnt,SystErr$(*)
+2322  ! This checks if there are errors on an instrument and if so reports them.
+2324    DIM ErrResponse$[80]
+2326    FoundError=0         !FALSE
+2328    REPEAT
+2330      IF "HP-IB"=Se_IO_Type$ THEN
+2332        CALL GetVxiString(Address,"SYST:ERR?",ErrResponse$)
+2334      ELSE       !"RS-232"=Se_IO_Type$
+2336        IF 0<SystErrCnt THEN
+2338          ErrResponse$=SystErr$(1)
+2340          FOR ErrIdx=2 TO SystErrCnt
+2342            SystErr$(ErrIdx-1)=SystErr$(ErrIdx)
+2344          NEXT ErrIdx
+2346          SystErrCnt=SystErrCnt-1
+2348          IF 0=FoundError THEN
+2350            CALL Report("Note that the following errors may have been caused by the previous command, errors are not detected immediately via RS-232")
+2352          END IF
+2354        ELSE
+2356          ErrResponse$="+0,"&CHR$(34)&"No error"&CHR$(34)
+2358        END IF
+2360      END IF     !Se_IO_Type$ test
+2362      IF "+0,"&CHR$(34)&"No error"&CHR$(34)<>ErrResponse$ THEN
+2364        CALL ReportErr("Encountered error '"&ErrResponse$&"' on instrument at address "&VAL$(Address))
+2366        FoundError=1             !TRUE
+2368      END IF
+2370    UNTIL "+0,"&CHR$(34)&"No error"&CHR$(34)=ErrResponse$
+2372    IF FoundError THEN
+2374      IF StopFlag THEN
+2376        CALL ReportStop(ErrMsg$)
+2378      ELSE
+2380        CALL Report(ErrMsg$)
+2382      END IF
+2384    END IF
+2386  SUBEND !CkVxiErr
+2388  !
+2390  SUB DumpVxiInput
+2392  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2394  ! Should only be used for serial I/O.
+2396  ! Reads from input stream until timeout.  Does not save any errors it sees.
+2398    IF "HP-IB"=Se_IO_Type$ THEN
+2400      CALL ReportErrStop("Internal error, clearing serial I/O while using HP-IB")
+2402    ELSE !"RS-232"=Se_IO_Type$
+2404      ON TIMEOUT Se_IO_Id,1 GOTO DumpFinished    !Empty input stream
+2406      REPEAT
+2408        Char$=""
+2410        StartTime=TIMEDATE
+2412        REPEAT   !Wait up to 1 sec if errors or no input available
+2414          ON ERROR CALL SkipNextLine     !Handle I/O error with re-tries
+2416          ENTER Se_IO_Id USING "#,A";Char$
+2418          OFF ERROR
+2420        UNTIL ""<>Char$ OR 1<TIMEDATE-StartTime
+2422      UNTIL ""=Char$
+2424  DumpFinished:!
+2426    END IF       !Se_IO_Type$ test
+2428  SUBEND !DumpVxiInput
+2430  !
+2432  SUB GetVxiPattern(Pattern$,Result$)
+2434  COM /ConstantsRS232/ AnyString$,ResponseEnd$
+2436  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2438  COM /SetErrorOccured/ ErrorOccured,LastError
+2440  COM /RS232Err/ SystErrCnt,SystErr$(*)
+2442  ! Should only be used for serial I/O.
+2444  ! Should not be called with an empty pattern.
+2446  ! Checks that the input stream matches the given pattern.
+2448  ! Note this does not shift window 1 character at a time, so looking for
+2450  !   xABAC will match xABAC or xABCABAC, but not xABABAC
+2452    IF "HP-IB"=Se_IO_Type$ THEN
+2454      CALL ReportErrStop("Internal error, looking for serial I/O pattern while using HP-IB")
+2456    ELSE !"RS-232"=Se_IO_Type$
+2458      !pattern may contain "Any String" characters
+2460      !if pattern ends in "Any String" then a timeout is not an error
+2462      AnyMatch=0
+2464      ExactMatch=1
+2466      Result$=""
+2468      ON TIMEOUT Se_IO_Id,20 GOTO NoMoreInput    !Empty serial input stream
+2470      REPEAT
+2472        IF AnyString$=Pattern$[ExactMatch,ExactMatch] THEN
+2474          AnyMatch=ExactMatch
+2476          IF LEN(Pattern$)>ExactMatch THEN ExactMatch=ExactMatch+1
+2478        END IF
+2480        Char$=""
+2482        StartTime=TIMEDATE
+2484        REPEAT   !Wait up to 20 sec if errors or no input available
+2486          ON ERROR CALL SkipNextLine     !Handle I/O error with re-tries
+2488          ENTER Se_IO_Id USING "#,A";Char$
+2490          OFF ERROR
+2492        UNTIL ""<>Char$ OR 20<TIMEDATE-StartTime
+2494        IF ""=Char$ THEN GOTO NoMoreInput
+2496        IF CHR$(7)=Char$ THEN
+2498          SystErrCnt=SystErrCnt+1
+2500          IF 10>SystErrCnt THEN  !SystErrCntMax
+2502            DIM ErrMsg$[80]
+2504            ThisErr=SystErrCnt   !Following CALL will change SystErrCnt
+2506            CALL GetVxiPattern(AnyString$&ResponseEnd$,ErrMsg$)
+2508            IF 0<>POS(ErrMsg$,ResponseEnd$) THEN
+2510              SystErr$(ThisErr)=ErrMsg$[1,LEN(ErrMsg$)-LEN(ResponseEnd$)]
+2512            ELSE
+2514              SystErr$(ThisErr)=ErrMsg$[1,80-25]&" (end of message missing)"
+2516            END IF
+2518          ELSE
+2520            SystErrCnt=10                !SystErrCntMax, stop at end of queue
+2522          END IF
+2524        END IF
+2526        ErrorOccured=0   !FALSE
+2528        ON ERROR CALL SetErrorOccured
+2530        Result$=Result$&Char$
+2532        OFF ERROR 
+2534        !Just give back what will fit
+2536        IF 0<>ErrorOccured THEN Result$=Result$[2]&Char$
+2538        IF Pattern$[ExactMatch,ExactMatch]=Char$ THEN
+2540          ExactMatch=ExactMatch+1
+2542        ELSE
+2544          IF 0=AnyMatch THEN GOTO MatchFailed
+2546          !ELSE go back to last AnyString$
+2548          IF ExactMatch<>AnyMatch THEN   !IF not at end of pattern
+2550            ExactMatch=AnyMatch+1
+2552            IF Pattern$[ExactMatch,ExactMatch]=Char$ THEN
+2554              ExactMatch=ExactMatch+1
+2556            END IF
+2558          END IF
+2560        END IF
+2562      UNTIL ExactMatch>LEN(Pattern$)
+2564      GOTO ExitSub       !Found the pattern we were looking for
+2566  NoMoreInput:!
+2568      IF ExactMatch<LEN(Pattern$) OR AnyString$<>Pattern$[LEN(Pattern$)] THEN
+2570  MatchFailed:!
+2572        IF AnyString$&"Select an instrument."<>Pattern$ OR 0=POS(Result$,"IBASIC Booting") THEN  !In case DIAG:IBAS:DISP BUIL
+2574          DIM HumanPattern$[255]
+2576          WHILE ""<>Pattern$
+2578            IF AnyString$=Pattern$[1,1] THEN
+2580              HumanPattern$=HumanPattern$&"..."
+2582            ELSE
+2584              HumanPattern$=HumanPattern$&Pattern$[1,1]
+2586            END IF
+2588            Pattern$=Pattern$[2]
+2590          END WHILE
+2592          IF ""=Result$ THEN
+2594            CALL IOFailStop
+2596          ELSE
+2598            CALL ReportErr("Failed to find '"&HumanPattern$&"' in serial input, found '"&Result$&"'")
+2600            CALL Report("other program may be interfering or format/baud rate may be wrong")
+2602          END IF
+2604        END IF
+2606      END IF
+2608    END IF       !Se_IO_Type$ test
+2610  ExitSub:!
+2612  SUBEND !GetVxiPattern
+2614  !
+2616  SUB GetVxiStringCk(Address,Command$,Result$)
+2618    CALL GetVxiString(Address,Command$,Result$)
+2620    CALL CkVxiErr(Address,"While sending query '"&Command$&"' to "&VAL$(Address),1)      !If errs then stop
+2622    IF ""=TRIM$(Result$) THEN
+2624      CALL ReportErr("Expected a non-blank string, but received '"&Result$&"' while sending query '"&Command$&"' to "&VAL$(Address))
+2626    END IF
+2628  SUBEND !GetVxiStringCk
+2630  !
+2632  SUB GetVxiString(Address,Command$,Result$)
+2634  COM /ConstantsRS232/ AnyString$,ResponseEnd$
+2636  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2638    CALL SendVxi(Address,Command$)
+2640    IF "HP-IB"=Se_IO_Type$ THEN
+2642      IF 10000>Address THEN
+2644        FullAddress=Se_IO_Id+Address
+2646      ELSE
+2648        FullAddress=Address
+2650      END IF
+2652      ON TIMEOUT FullAddress DIV 10000,10 CALL IOTimeOutStop
+2654      ENTER FullAddress;Result$
+2656    ELSE !"RS-232"=Se_IO_Type$
+2658      CALL GetVxiPattern(AnyString$&ResponseEnd$,Result$)
+2660      IF LEN(Result$)>LEN(ResponseEnd$) THEN
+2662        Result$=Result$[1,LEN(Result$)-LEN(ResponseEnd$)]
+2664      ELSE
+2666        CALL ReportErr("Expected a longer string, received '"&Result$&"' while sending query '"&Command$&"' to "&VAL$(Address))
+2668      END IF
+2670    END IF       !Se_IO_Type$ test
+2672  SUBEND !GetVxiString
+2674  !
+2676  SUB GetVxiNumberCk(Address,Command$,Result)
+2678  COM /ConstantsRS232/ AnyString$,ResponseEnd$
+2680  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2682  COM /SetErrorOccured/ ErrorOccured,LastError
+2684    CALL SendVxi(Address,Command$)
+2686    ErrorOccured=0       !FALSE
+2688    IF "HP-IB"=Se_IO_Type$ THEN
+2690      IF 10000>Address THEN
+2692        FullAddress=Se_IO_Id+Address
+2694      ELSE
+2696        FullAddress=Address
+2698      END IF
+2700      ON TIMEOUT FullAddress DIV 10000,10 CALL IOTimeOutStop
+2702      ENTER FullAddress;Result
+2704    ELSE !"RS-232"=Se_IO_Type$
+2706      DIM Result$[255]
+2708      CALL GetVxiPattern(AnyString$&ResponseEnd$,Result$)
+2710      ON ERROR CALL SetErrorOccured
+2712      Result=VAL(Result$)
+2714      OFF ERROR 
+2716    END IF       !Se_IO_Type$ test
+2718    CALL CkVxiErr(Address,"While sending query '"&Command$&"' to "&VAL$(Address),1)      !If errs then stop
+2720    IF 0<>ErrorOccured THEN
+2722      CALL ReportErr("Expected a number, but received '"&Result$&"' while sending query '"&Command$&"' to "&VAL$(Address)&" (using 0)")
+2724      Result=0
+2726    END IF
+2728  SUBEND !GetVxiNumberCk
+2730  !
+2732  SUB GetVxi2NumberCk(Address,Command$,Result1,Result2)
+2734  COM /ConstantsRS232/ AnyString$,ResponseEnd$
+2736  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2738  COM /SetErrorOccured/ ErrorOccured,LastError
+2740    CALL SendVxi(Address,Command$)
+2742    ErrorOccured=0       !FALSE
+2744    IF "HP-IB"=Se_IO_Type$ THEN
+2746      IF 10000>Address THEN
+2748        FullAddress=Se_IO_Id+Address
+2750      ELSE
+2752        FullAddress=Address
+2754      END IF
+2756      ON TIMEOUT FullAddress DIV 10000,10 CALL IOTimeOutStop
+2758      ENTER FullAddress;Result1,Result2
+2760    ELSE !"RS-232"=Se_IO_Type$
+2762      DIM Result$[255]
+2764      CALL GetVxiPattern(AnyString$&ResponseEnd$,Result$)
+2766      ON ERROR CALL SetErrorOccured
+2768      Result1=VAL(Result$)
+2770      Result2=VAL(Result$[POS(Result$,",")+1])
+2772      OFF ERROR 
+2774    END IF       !Se_IO_Type$ test
+2776    CALL CkVxiErr(Address,"While sending query '"&Command$&"' to "&VAL$(Address),1)      !If errs then stop
+2778    IF 0<>ErrorOccured THEN
+2780      CALL ReportErr("Expected two numbers, but received '"&Result$&"' while sending query '"&Command$&"' to "&VAL$(Address)&" (using 0,0)")
+2782      Result1=0
+2784      Result2=0
+2786    END IF
+2788  SUBEND !GetVxi2NumberCk
+2790  !
+2792  SUB CharVxiFiles
+2794  COM /SelectedFiles/ Se_Dir$,Se_Log$
+2796  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2798  COM /SelectedPF/ PF_FName$,PF_FSize
+2800  COM /SelectedDF/ DF_Count,DF_FName$(*),DF_FSize(*),DF_DSize(*),DF_DJmpRev(*)
+2802  COM /SetErrorOccured/ ErrorOccured,LastError
+2804  !
+2806  !  This subprogram searches the disk and directory specified by Se_Dir$
+2808  !  for files it recognizes as ROM programs or downloadable drivers.
+2810  !  It fills in the number of drivers found and the list of driver
+2812  !  names file sizes.
+2814  !
+2816    DIM DirList$(100)[80]                        !F_CountMax
+2818    DIM PSuffix$[2],DSuffix$[2]
+2820    IF "HP-IB"=Se_IO_Type$ THEN
+2822      PSuffix$="PU"
+2824      DSuffix$="DU"
+2826    ELSE !"RS-232"=Se_IO_Type$
+2828      PSuffix$="PC"
+2830      DSuffix$="DC"
+2832    END IF       !Se_IO_Type$ test
+2834    ErrorOccured=0       !FALSE
+2836    IF ""<>Se_Dir$ THEN
+2838      CALL ReportStatus("Searching "&Se_Dir$&" for files ending in "&PSuffix$&" or "&DSuffix$)
+2840      ON ERROR CALL SetErrorOccured
+2842      WAIT 1             !In case you have a slow disk
+2844      CAT Se_Dir$ TO DirList$(*);NAMES
+2846      OFF ERROR 
+2848      IF 0<>ErrorOccured THEN CALL ReportErr("Directory '"&Se_Dir$&"' is not accessible (will not be used)")
+2850    ELSE
+2852      CALL ReportStatus("Searching current directory for files ending in "&PSuffix$&" or "&DSuffix$)
+2854      ON ERROR CALL SetErrorOccured
+2856      WAIT 1             !In case you have a slow disk
+2858      CAT TO DirList$(*);NAMES
+2860      OFF ERROR 
+2862      IF 0<>ErrorOccured THEN CALL ReportErr("Current directory is not accessible (will not be used)")
+2864    END IF
+2866    PF_FName$=""
+2868    DF_Count=1
+2870    DirLine=0
+2872    WHILE SIZE(DirList$,1)-1>DirLine AND ""<>DirList$(DirLine) AND 20>=DF_Count  !DF_CountMax
+2874      DF_FName$(DF_Count)=TRIM$(DirList$(DirLine)[1,16])
+2876      LenFName=LEN(DF_FName$(DF_Count))
+2878      IF 2<=LenFName THEN        !for files we use filename must be >=2 char
+2880        IF DSuffix$=DF_FName$(DF_Count)[LenFName-1] THEN
+2882          DF_Count=DF_Count+1
+2884        ELSE
+2886          IF 5<=LenFName THEN    !for ROM program files filename must be >=5 char
+2888            IF "1"&PSuffix$=DF_FName$(DF_Count)[LenFName-3,LenFName-3]&DF_FName$(DF_Count)[LenFName-1] THEN
+2890              IF ""<>PF_FName$ THEN CALL Report("More than one ROM program file found, ignoring '"&PF_FName$&"' and using '"&DF_FName$(DF_Count)&"'")
+2892              PF_FName$=DF_FName$(DF_Count)
+2894            END IF
+2896          END IF
+2898        END IF
+2900      END IF
+2902      DirLine=DirLine+1
+2904    END WHILE
+2906    IF ""<>DirList$(SIZE(DirList$,1)-1) THEN
+2908      IF ""=Se_Dir$ THEN
+2910        CALL ReportErr("Too many files in current directory, last entries ignored.")
+2912        CALL Report("If Drivers are not found then transfer your Drivers, Download Utility and")
+2914        CALL Report("Configuration File to another directory containing less than 100 files.")
+2916      ELSE
+2918        CALL ReportErr("Too many files in '"&Se_Dir$&"' directory, last entries ignored")
+2920        CALL Report("If Drivers are not found then transfer your Drivers to another")
+2922        CALL Report("directory containing less than 100 files.")
+2924      END IF
+2926    END IF
+2928    DF_Count=DF_Count-1
+2930    IF ""=PF_FName$ THEN
+2932      CALL ReportStatus("Found no ROM program file and "&VAL$(DF_Count)&" driver file(s)")
+2934    ELSE
+2936      CALL ReportStatus("Found ROM program file "&PF_FName$&" and "&VAL$(DF_Count)&" driver file(s)")
+2938    END IF
+2940  SUBEND !CharVxiFiles
+2942  !
+2944  SUB GetPFInfo
+2946  COM /SelectedFiles/ Se_Dir$,Se_Log$
+2948  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+2950  COM /SelectedPF/ PF_FName$,PF_FSize
+2952  COM /SetErrorOccured/ ErrorOccured,LastError
+2954  !
+2956  ! This subprogram gets information about the ROM program file.
+2958  !
+2960    DIM JunkByte$[1],CheckByte$[1],LenByte$[1]
+2962    DIM Expect$[50]
+2964    IF "HP-IB"=Se_IO_Type$ THEN
+2966      ! Program file format:
+2968      !   CONTENTS              BYTES    MEANING
+2970      !   -----------------      --      --------------------------------------
+2972      !   PROG:DEL;               9      SCPI command
+2974      !   DEF #8          6      SCPI command header
+2976      !   dddddddd                8 (BS) size of data block, in ASCII
+2978      !   ...                    BS      bytes to be placed in flash ROM
+2980      !   <NL>            1      terminate command (0x0a)
+2982      !
+2984      Expect$="PROG:DEL;DEF #8"
+2986    ELSE !"RS-232"=Se_IO_Type$
+2988      ! Program file format:
+2990      !   CONTENTS                      BYTES    MEANING
+2992      !   -----------------              --      -------------------------------
+2994      !   CNTL-D                  1      connect to display system (0x04)
+2996      !   ST UNKNOWN\r           11      insure terminal control not used
+2998      !   SI LOADER\r                    10      connect to loader instrument
+3000      !   *RST\r                  5      device reset
+3002      !   PROG:DEL;                       9      SCPI command
+3004      !   DEF:CHEC #8                    11      SCPI command header
+3006      !   dddddddd                        8 (BS) size of data block, BS=2xROM
+3008      !   ...                             N      flash ROM code, N=BS+(BS/80)
+3010      !                                  this includes \r every 80 chars
+3012      !   <CR>                    1      terminate command (0x0d)
+3014      !
+3016      Expect$=CHR$(04)&"ST UNKNOWN"&CHR$(13)&"SI LOADER"&CHR$(13)&"*RST"&CHR$(13)&"PROG:DEL;DEF:CHEC #8"
+3018      CmdSize=LEN("PROG:DEL;DEF:CHEC #8")+8+1    !Cmd + 1 char fudge
+3020    END IF       !Se_IO_Type$ test
+3022    !
+3024    IF ""<>PF_FName$ THEN
+3026      BadFile=0  !FALSE
+3028      ErrorOccured=0     !FALSE
+3030      ON ERROR CALL SetErrorOccured
+3032      WAIT 1             !In case you have a slow disk
+3034      ASSIGN @BinaryFile TO Se_Dir$&PF_FName$;FORMAT OFF
+3036      ENTER @BinaryFile,1 USING "#,A";JunkByte$
+3038      OFF ERROR 
+3040      IF 0<>ErrorOccured THEN
+3042        CALL ReportErr("ROM program file '"&Se_Dir$&PF_FName$&"' is empty or not readable (file will not be used)")
+3044        BadFile=1        !TRUE
+3046      ELSE
+3048        BlkLenStart=LEN(Expect$)
+3050        PF_PSize=0
+3052        FOR I=1 TO 8
+3054          ON ERROR CALL SkipNextLine
+3056          ENTER @BinaryFile,BlkLenStart+I USING "#,A";LenByte$
+3058          OFF ERROR 
+3060          IF "0">LenByte$ OR "9"<LenByte$ THEN
+3062            BadFile=1    !TRUE
+3064          ELSE
+3066            PF_PSize=10*PF_PSize+VAL(LenByte$)
+3068          END IF
+3070        NEXT I
+3072        !Compute the size of all ROM program parts based on block size
+3074        IF "HP-IB"=Se_IO_Type$ THEN
+3076          PF_FSize=BlkLenStart+8+PF_PSize+1
+3078        ELSE     !"RS-232"=Se_IO_Type$
+3080          PF_FSize=BlkLenStart+8+PF_PSize+((PF_PSize+CmdSize+1) DIV 79)+1
+3082        END IF   !Se_IO_Type$ test
+3084        ! Check that the file looks okay
+3086        FOR J=1 TO LEN(Expect$)
+3088          ON ERROR CALL SkipNextLine
+3090          ENTER @BinaryFile,J USING "#,A";CheckByte$
+3092          OFF ERROR 
+3094          IF Expect$[J,J]<>CheckByte$ THEN BadFile=1     !TRUE
+3096        NEXT J
+3098        IF 0<>BadFile THEN CALL ReportErr("ROM program file '"&Se_Dir$&PF_FName$&"' is not in proper format (file will not be used)")
+3100      END IF
+3102      ASSIGN @BinaryFile TO *
+3104      IF 0<>BadFile THEN PF_FName$=""
+3106    END IF
+3108  SUBEND !GetPFInfo
+3110  !
+3112  SUB GetDFInfo
+3114  COM /SelectedFiles/ Se_Dir$,Se_Log$
+3116  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+3118  COM /SelectedDF/ DF_Count,DF_FName$(*),DF_FSize(*),DF_DSize(*),DF_DJmpRev(*)
+3120  COM /SetErrorOccured/ ErrorOccured,LastError
+3122  !
+3124  ! This subprogram gets information about the drivers whose names
+3126  ! are in DF_FName$.  If the file is not a driver it gives error & the file
+3128  ! is removed from DF_FName$.
+3130  ! Otherwise the Driver revision number, Jump table revision number,
+3132  ! downloaded size and file size are updated.
+3134  !
+3136    DIM JunkByte$[1],CheckByte$[1]
+3138    DIM Expect$(3)[50]
+3140    DIM Location(3)
+3142    IF "HP-IB"=Se_IO_Type$ THEN
+3144      ! Driver file format:
+3146      !   CONTENTS              BYTES    MEANING
+3148      !   -----------------      --      --------------------------------------
+3150      !   DIAG:DRIV:LOAD #8      17      SCPI command header
+3152      !   dddddddd                8 (BS) size of data block, in ASCII, BS>DS+9
+3154      !   <0xFE>          1      driver start ID
+3156      !   x                       1      download format rev # (e.g. 0x01)
+3158      !   xx                      2      required jump table rev #
+3160      !   xxxx            4 (DS) DRAM memory required
+3162      !   ...                     N      drive code, N=BS-9
+3164      !   <0xFF>          1      driver end ID
+3166      !   <NL>            1      terminate command (0x0a)
+3168      !
+3170      DF_FSizeMin=35                     !DF_FSize=17+8+BS+1
+3172      Expect$(1)="DIAG:DRIV:LOAD #8"
+3174      Expect$(2)=CHR$(254)               ! = 0xFE
+3176      Expect$(3)=CHR$(255)&CHR$(10)      ! = 0xFF0a
+3178    ELSE !"RS-232"=Se_IO_Type$
+3180      ! Driver file format:
+3182      !   CONTENTS                      BYTES    MEANING
+3184      !   -----------------              --      -------------------------------
+3186      !   CNTL-D                  1      connect to display system (0x04)
+3188      !   ST UNKNOWN\r           11      insure terminal control not used
+3190      !   SI SYSTEM\r                    10      connect to system instrument
+3192      !   *RST\r                  5      device reset
+3194      !   DIAG:DRIV:LOAD:CHEC #8 22      SCPI command header
+3196      !   dddddddd                        8 (BS) size of data block, BS>2(DS+9)
+3198      !   <0xFF><0x8E>            2      driver start ID
+3200      !   cx                              2      download format rev #(eg 0x80f1)
+3202      !   cxcx                    4      required jump table rev #
+3204      !   cxcxcxcx                        8 (DS) DRAM memory required
+3206      !   ...                             N      drive code, N=BS-18+(BS/80)
+3208      !                                  this includes \r every 80 chars
+3210      !   <0xFF><0xFF>            2      driver end ID
+3212      !   <CR>                    1      terminate command (0x0d)
+3214      !
+3216      DF_FSizeMin=76                     !DF_FSize=1+11+10+5+22+8+BS+(BS/80)+1
+3218      Expect$(1)=CHR$(04)&"ST UNKNOWN"&CHR$(13)&"SI SYSTEM"&CHR$(13)&"*RST"&CHR$(13)&"DIAG:DRIV:LOAD:CHEC #8"
+3220      Expect$(2)=CHR$(255)&CHR$(142)             ! = 0xFF8E
+3222      Expect$(3)=CHR$(255)&CHR$(255)&CHR$(13)    ! = 0xFFFF0d
+3224    END IF       !Se_IO_Type$ test
+3226    !
+3228    DF_UseIdx=1
+3230    FOR DF_ListIdx=1 to DF_Count
+3232      BadFile=0  !FALSE
+3234      ErrorOccured=0     !FALSE
+3236      ON ERROR CALL SetErrorOccured
+3238      WAIT 1             !In case you have a slow disk
+3240      ASSIGN @BinaryFile TO Se_Dir$&DF_FName$(DF_ListIdx);FORMAT OFF
+3242      ENTER @BinaryFile,1 USING "#,A";JunkByte$
+3244      OFF ERROR 
+3246      IF 0<>ErrorOccured THEN
+3248        CALL ReportErr("Driver file '"&Se_Dir$&DF_FName$(DF_ListIdx)&"' is empty or not readable (file will not be used)")
+3250        BadFile=1        !TRUE
+3252      ELSE
+3254        ! Find file size via binary search (LIF dir won't tell size exactly)
+3256        DF_FSizeTop=2^24
+3258        DF_FSizeBot=0
+3260        WHILE (DF_FSizeBot+1)<DF_FSizeTop
+3262          DF_FSizeGuess=INT((DF_FSizeTop+DF_FSizeBot)/2)
+3264          ErrorOccured=0 !FALSE
+3266          ON ERROR CALL SetErrorOccured
+3268          ENTER @BinaryFile,DF_FSizeGuess USING "#,A";JunkByte$
+3270          OFF ERROR 
+3272          IF ErrorOccured THEN
+3274            DF_FSizeTop=DF_FSizeGuess    !Guess was too big
+3276          ELSE
+3278            DF_FSizeBot=DF_FSizeGuess    !Guess was too small
+3280          END IF
+3282        END WHILE
+3284        DF_FSize(DF_UseIdx)=DF_FSizeBot  !DF_FSize=INT((DF_FSizeTop+DF_FSizeBot)/2)
+3286        BlkStart=LEN(Expect$(1))+8+1
+3288        DF_DJmpRev(DF_UseIdx)=FNReadWord(@BinaryFile,BlkStart,2)
+3290        DF_DSizeHi=FNReadWord(@BinaryFile,BlkStart,4)
+3292        DF_DSizeLo=FNReadWord(@BinaryFile,BlkStart,6)
+3294        DF_DSize(DF_UseIdx)=65536.0*DF_DSizeHi+DF_DSizeLo
+3296        DF_DSize(DF_UseIdx)=4*INT((DF_DSize(DF_UseIdx)+3)/4)     !Long word alignment
+3298        IF DF_FSize(DF_UseIdx)<DF_FSizeMin THEN
+3300          BadFile=1      !TRUE
+3302        ELSE
+3304          ! Check that the file looks okay
+3306          Location(1)=1
+3308          Location(2)=1+LEN(Expect$(1))+8
+3310          Location(3)=DF_FSize(DF_UseIdx)-LEN(Expect$(3))+1
+3312          FOR I=1 TO 3
+3314            FOR J=1 TO LEN(Expect$(I))
+3316              ON ERROR CALL SkipNextLine
+3318              ENTER @BinaryFile,Location(I)+J-1 USING "#,A";CheckByte$
+3320              OFF ERROR 
+3322              IF Expect$(I)[J,J]<>CheckByte$ THEN BadFile=1      !TRUE
+3324            NEXT J
+3326          NEXT I
+3328        END IF
+3330        IF 0<>BadFile THEN CALL ReportErr("Driver file '"&Se_Dir$&DF_FName$(DF_ListIdx)&"' is not in proper format (file will not be used)")
+3332      END IF
+3334      ASSIGN @BinaryFile TO *
+3336      DF_FName$(DF_UseIdx)=DF_FName$(DF_ListIdx) !In case it's not bad
+3338      IF 0=BadFile THEN DF_UseIdx=DF_UseIdx+1
+3340    NEXT DF_ListIdx
+3342    DF_Count=DF_UseIdx-1
+3344  SUBEND !GetDFInfo
+3346  !
+3348  DEF FNReadWord(@BinaryFile,BlkStart,BlkIdx)
+3350  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+3352  ! Reads a (possibly non-aligned) word from checked or unchecked blocks
+3354    DIM TopNibble$[1],LowNibble$[1]
+3356    IF "HP-IB"=Se_IO_Type$ THEN
+3358      ON ERROR CALL SkipNextLine
+3360      ENTER @BinaryFile,BlkStart+BlkIdx USING "#,B";TopByte
+3362      ENTER @BinaryFile,BlkStart+BlkIdx+1 USING "#,B";LowByte
+3364      OFF ERROR 
+3366    ELSE !"RS-232"=Se_IO_Type$
+3368      ON ERROR CALL SkipNextLine
+3370      ENTER @BinaryFile,BlkStart+BlkIdx*2 USING "#,A";TopNibble$
+3372      ENTER @BinaryFile,BlkStart+BlkIdx*2+1 USING "#,A";LowNibble$
+3374      TopByte=16.0*(NUM(TopNibble$) MOD 16)+(NUM(LowNibble$) MOD 16)
+3376      ENTER @BinaryFile,BlkStart+BlkIdx*2+2 USING "#,A";TopNibble$
+3378      ENTER @BinaryFile,BlkStart+BlkIdx*2+3 USING "#,A";LowNibble$
+3380      OFF ERROR 
+3382      LowByte=16.0*(NUM(TopNibble$) MOD 16)+(NUM(LowNibble$) MOD 16)
+3384    END IF       !Se_IO_Type$ test
+3386    RETURN 256.0*TopByte+LowByte
+3388  FNEND !FNReadWord
+3390  !
+3392  SUB LoadFile(FileName$,TotalBytes,FirstCall)
+3394  COM /ConstantsMisc/ ProgName$,SysAddr,EOFError
+3396  COM /ConstantsRS232/ AnyString$,ResponseEnd$
+3398  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+3400  COM /SetErrorOccured/ ErrorOccured,LastError
+3402  COM /LoadFile/ BytesSent
+3404    DIM Junk$[80]
+3406    DIM NextByte$[1]
+3408    IF FirstCall THEN
+3410      BytesSent=0
+3412      ErrorOccured=0
+3414      ON ERROR CALL SetErrorOccured
+3416      ASSIGN @BinaryFile TO FileName$;FORMAT OFF
+3418      OFF ERROR
+3420      IF ErrorOccured THEN CALL ReportErrStop("Could not open file "&FileName$)
+3422      CALL Report("Total byte size for download: "&VAL$(TotalBytes)&" bytes")
+3424    ELSE   !used for ROM Program downloading of parts 2 and above
+3426      REPEAT
+3428        ErrorOccured=0
+3430        ON ERROR CALL SetErrorOccured
+3432        ASSIGN @BinaryFile TO FileName$;FORMAT OFF
+3434        OFF ERROR
+3436        IF ErrorOccured THEN
+3438           Ver$=FileName$[LEN(FileName$)-3,LEN(FileName$)-3]
+3440           CALL ReportStatus("Insert LIF diskette #"&Ver$&" containing file "&FileName$)
+3442           WAIT 10
+3444           CALL ReportStatus("")
+3446        END IF
+3448      UNTIL ErrorOccured=0  
+3450    END IF
+3452    CALL Report("Downloading '"&FileName$&"'")
+3454    IF "HP-IB"=Se_IO_Type$ THEN
+3456      INTEGER BlkBuffer(499)
+3458      BlkLen=SIZE(BlkBuffer,1)*2
+3460      ErrorOccured=0     !FALSE
+3462      ON ERROR CALL SetErrorOccured
+3464      ASSIGN @Mainframe TO Se_IO_Id+SysAddr;FORMAT OFF
+3466      OFF ERROR 
+3468      IF 0<>ErrorOccured THEN CALL IOFailStop
+3470      REPEAT
+3472        FOR I=0 TO SIZE(BlkBuffer,1)-1
+3474          BlkBuffer(I)=0
+3476        NEXT I
+3478        ErrorOccured=0   !FALSE
+3480        ON ERROR CALL SetErrorOccured
+3482        ENTER @BinaryFile;BlkBuffer(*)
+3484        OFF ERROR 
+3486        IF ErrorOccured THEN
+3488          IF LastError<>EOFError THEN CALL ReportErrStop("trouble reading "&FileName$)
+3490        ELSE
+3492          ON TIMEOUT Se_IO_Id DIV 10000,10 CALL IOTimeOutStop
+3494          OUTPUT @Mainframe;BlkBuffer(*)
+3496          BytesSent=BytesSent+BlkLen
+3498          CALL ReportStatus(VAL$(BytesSent))
+3500        END IF
+3502      UNTIL ErrorOccured AND LastError=EOFError
+3504      LastWrd=SIZE(BlkBuffer,1)-1                !Find how much of BlkBuffer was full
+3506      WHILE 0=BlkBuffer(LastWrd) AND 0<LastWrd
+3508        LastWrd=LastWrd-1
+3510      END WHILE
+3512      IF 0<>BlkBuffer(LastWrd) THEN              !If buffer not empty
+3514        FOR I=0 TO LastWrd-1             !send out full words
+3516          ON TIMEOUT Se_IO_Id DIV 10000,10 CALL IOTimeOutStop
+3518          OUTPUT @Mainframe;BlkBuffer(I)
+3520        NEXT I
+3522        BytesSent=BytesSent+LastWrd*2
+3524        IF 0=BINAND(BlkBuffer(LastWrd),255) THEN !Send partial word
+3526          OUTPUT @Mainframe USING "#,B";BlkBuffer(LastWrd) DIV 256
+3528          BytesSent=BytesSent+1
+3530        ELSE                                     !Send full word
+3532          OUTPUT @Mainframe;BlkBuffer(LastWrd)
+3534          BytesSent=BytesSent+2
+3536        END IF
+3538      END IF
+3540      ASSIGN @Mainframe TO *
+3542    ELSE !"RS-232"=Se_IO_Type$
+3544      IF 0<>FirstCall THEN
+3546        CALL SendVxiCk(SysAddr,"*OPC")   !Make sure instr. is selectable
+3548        RespEndCnt=0     !The first RespEnds are treated specially
+3550      ELSE
+3552        RespEndCnt=2     !At least 2 RespEnds have been sent already
+3554      END IF
+3556      REPEAT
+3558        ErrorOccured=0   !FALSE
+3560        ON ERROR CALL SetErrorOccured
+3562        ENTER @BinaryFile USING "#,A";NextByte$
+3564        OFF ERROR 
+3566        IF ErrorOccured THEN
+3568          IF LastError<>EOFError THEN CALL ReportErrStop("trouble reading "&FileName$)
+3570        ELSE
+3572          ErrorOccured=0 !FALSE
+3574          ON ERROR CALL SetErrorOccured
+3576          OUTPUT Se_IO_Id;NextByte$;
+3578          OFF ERROR 
+3580          IF 0<>ErrorOccured THEN CALL IOTimeOutStop
+3582          BytesSent=BytesSent+1
+3584          IF CHR$(13)=NextByte$ THEN
+3586            IF 2<=RespEndCnt THEN
+3588              CALL GetVxiPattern(AnyString$&ResponseEnd$,Junk$)
+3590            ELSE !First two \r in file create multiple \r's returned
+3592              IF 1=RespEndCnt THEN       !^Dst unknown\n -> Select...\nst...own\nSelect..\n...OWN\n
+3594                CALL GetVxiPattern(AnyString$&ResponseEnd$&AnyString$&ResponseEnd$&AnyString$&ResponseEnd$&AnyString$&ResponseEnd$,Junk$)
+3596              ELSE       !si system\n -> si system\n..._0: busy\n..._0:\n
+3598                CALL GetVxiPattern(AnyString$&ResponseEnd$&AnyString$&ResponseEnd$&AnyString$&ResponseEnd$,Junk$)
+3600              END IF
+3602              RespEndCnt=RespEndCnt+1
+3604            END IF
+3606            CALL ReportStatus(VAL$(BytesSent))
+3608          END IF
+3610        END IF
+3612      UNTIL ErrorOccured AND LastError=EOFError
+3614    END IF       !Se_IO_Type$ test
+3616    ASSIGN @BinaryFile TO *
+3618  SUBEND !LoadFile
+3620  !
+3622  SUB CleanUp
+3624  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+3626  COM /ReportTmp/ Se_LogOpen,@Se_Log
+3628  COM /SelectedFiles/ Se_Dir$,Se_Log$
+3630    ON ERROR CALL SkipNextLine
+3632    IF ""<>Se_Log$ THEN
+3634      OUTPUT @Se_Log;END
+3636      ASSIGN @Se_Log TO *
+3638    END IF
+3640    OFF ERROR
+3642    IF "HP-IB"=Se_IO_Type$ THEN
+3644      !Do nothing
+3646    ELSE !"RS-232"=Se_IO_Type$
+3648      ON ERROR CALL SkipNextLine
+3650      ON TIMEOUT Se_IO_Id DIV 10000,1 GOTO ExitCleanUp
+3652      OUTPUT Se_IO_Id;CHR$(4)    !disconnect from the instruments
+3654  ExitCleanUp:!
+3656      OFF ERROR
+3658    END IF       !Se_IO_Type$ test
+3660  SUBEND !CleanUp
+3662  !
+3664  SUB ExecuteCmds(BatchFileName$,Label$) !Do commands in config file
+3666  ! This subprogram executes any line in the configuration file
+3668  ! that is in the proper format:
+3670  !   Label=<number>,<string to be sent>
+3672  ! The leading number must be between 0 and 30 and is the secondary
+3674  ! address of the instrument for which the command is intended.  If
+3676  ! the command is sent via RS-232 we will use a LADD of 8*secondary address.
+3678  ! If command sent generates an error, we stop and display the error.
+3680  COM /SelectedIO/ Se_IO_Type$,Se_IO_Id,Se_IO_Baud,Se_IO_SBits,Se_IO_Hand$
+3682  COM /SetErrorOccured/ ErrorOccured,LastError
+3684    CALL ReportStatus("Sending '"&Label$&"' commands from '"&BatchFileName$&"' file")
+3686    DIM Cmds$(80)[160]    !Cmd_CountMax, BatchLineLenMax
+3688    !Get list of commands
+3690    CALL GetBatchStrRep(BatchFileName$,Label$,Cmds$(*),CmdCount)
+3692    FOR I=1 TO CmdCount
+3694      ErrorOccured=0     !FALSE
+3696      ON ERROR CALL SetErrorOccured
+3698      Addr=VAL(Cmds$(I))
+3700      OFF ERROR 
+3702      IF 0<>ErrorOccured THEN
+3704        CALL ReportErr(BatchFileName$&" contains a value for '"&Label$&"' which should start with a numeric address, '"&Cmds$(I)&"' will not be used")
+3706      ELSE
+3708        IF Addr<0 OR Addr>30 THEN 
+3710          CALL ReportErr(BatchFileName$&" contains a value for '"&Label$&"' which should start with an address (0-30), '"&Cmds$(I)&"' will not be used")
+3712        ELSE
+3714          IF "HP-IB"=Se_IO_Type$ THEN
+3716            !Do nothing
+3718          ELSE   !"RS-232"=Se_IO_Type$
+3720            Addr=8*Addr  !Change to LADD
+3722          END IF !Se_IO_Type$ test
+3724          IF 0=POS(Cmds$(I),",") THEN
+3726            CALL ReportErr(BatchFileName$&" contains a value for '"&Label$&"' which is missing the ',' after the address, '"&Cmds$(I)&"' will not be used")
+3728          ELSE
+3730            Cmds$(I)=Cmds$(I)[POS(Cmds$(I),",")+1]
+3732            CALL Report("Sending '"&Cmds$(I)&"' to "&VAL$(Addr))
+3734            IF 0<>POS(UPC$(Cmds$(I)),"DIAG:BOOT") THEN  !If command is DIAG:BOOT
+3736              CALL SendVxi(Addr,Cmds$(I))
+3738              WAIT 2                     !Make sure re-boot has a chance to start
+3740              IF "HP-IB"=Se_IO_Type$ THEN
+3742                WAIT 30                  !Wait until we're sure it's done
+3744              ELSE       !"RS-232"=Se_IO_Type$
+3746                CALL DumpVxiInput
+3748              END IF     !Se_IO_Type$ test
+3750              CALL FinishReboot
+3752            ELSE
+3754              CALL SendVxiCk(Addr,Cmds$(I))
+3756            END IF
+3758          END IF
+3760        END IF
+3762      END IF
+3764    NEXT I
+3766  SUBEND !ExecuteCmds
